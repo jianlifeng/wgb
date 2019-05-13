@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.microdev.mapper.CompanyMapper">
+    <sql id="Company_Column_List">
+        id as pid, create_time, deleted, modify_time,address,
+        business_license, company_type, confirmed_time, latitude, leader, leader_mobile, address_code ,area,
+        logo, longitude, name, status, labor_dispatch_card, qr_code,active_workers,active_companys,bind_companys,bind_workers,poll_code
+    </sql>
+    <sql id="Company_Query_Param">
+        <if test="name != null and name != ''">
+            name LIKE concat('%', #{name},'%')
+        </if>
+        <if test="leader != null and leader !=''">
+            and leader like concat('%', #{leader},'%')
+        </if>
+        <if test="companyType != null and companyType != ''">
+            and company_type = #{companyType}
+        </if>
+        <if test="status != null and status != ''">
+            and status = #{status}
+        </if>
+        <if test="pollCode != null and pollCode != ''">
+            and poll_code = #{pollCode}
+        </if>
+        <if test="(observertype == 2 or observertype == 1) and name != null and (name == null or name == '')">
+            and active_companys = 0
+        </if>
+    </sql>
+    <delete id="deleteAreaRelation" parameterType="java.lang.String">
+        delete from user_area where id = #{id}
+    </delete>
+    <delete id="deleteCompanyArea">
+        delete from area_relation where id = #{id}
+    </delete>
+    <!-- 分页查询人力资源公司 -->
+    <select id="queryCompanys" parameterType="com.microdev.param.CompanyQueryDTO" resultType="com.microdev.model.Company">
+        select
+        <include refid="Company_Column_List"/>
+        from company
+        <where>
+            <include refid="Company_Query_Param"/>
+            <!--<if test="observertype != null">
+                <if test="observertype == 0">
+                    and id IN(select a.id from
+                    (select DISTINCT id from task_type_relation where task_type_id In
+                    (select task_type_id from task_type_relation where id = #{observerId}) and id_type = 2
+                    )a
+                    inner join
+                    (select DISTINCT id from area_relation where area_id In
+                    (select area_id from area_relation where id = #{observerId}) and id_type = 2
+                    )b on a.id = b.id
+                    where a.id not IN
+                    (select company_id from user_company where user_id = (select id from user where worker_id = #{observerId}) and status IN (0,1,3))
+                    )
+                </if>
+                <if test="observertype == 1">
+                    and id IN(select a.id from
+                    (select DISTINCT id from task_type_relation where task_type_id In
+                    (select task_type_id from task_type_relation where id = #{observerId}) and id_type = 2
+                    )a
+                    inner join
+                    (select DISTINCT id from area_relation where area_id In
+                    (select area_id from area_relation where id = #{observerId}) and id_type = 2
+                    )b on a.id = b.id
+                    where a.id not IN
+                    (select hr_id from hotel_hr_company where hotel_id = #{observerId} and status IN (0,3,5))
+                    )
+                </if>
+                <if test="observertype == 2">
+                    and id IN(select a.id from
+                    (select DISTINCT id from task_type_relation where task_type_id In
+                    (select task_type_id from task_type_relation where id = #{observerId}) and id_type = 1
+                    )a
+                    inner join
+                    (select DISTINCT id from area_relation where area_id In
+                    (select area_id from area_relation where id = #{observerId}) and id_type = 1
+                    )b on a.id = b.id
+                    where a.id not IN
+                    (select hotel_id from hotel_hr_company where hr_id = #{observerId} and status IN (0,3,5))
+                    )
+                </if>
+            </if>-->
+        </where>
+        order by create_time desc
+    </select>
+    <!-- 获取已添加该人力公司的所有用人单位 -->
+    <select id="queryHotelsByHrId" parameterType="com.microdev.param.CompanyQueryDTO" resultType="java.util.Map">
+        <!--select <include refid="Company_Column_List"/> from company where id IN
+        (select hotel_id from hotel_hr_company where hr_id = #{id} and status = 0)
+        <if test="name != null and name !=''">
+            and name like '%${name}%'
+        </if>
+        <if test="leader != null and leader !=''">
+            and leader like '%${leader}%'
+        </if>
+
+        order by create_time desc-->
+        SELECT c.name,c.company_type as companyType,c.logo,c.address,c.business_license as businessLicense,c.leader,c.leader_mobile as leaderMobile,c.status,c.confirmed_time as confirmedTime,c.latitude,c.longitude,c.id as pid, hh.status AS bindType,c.area,
+        hh.status as relationStatus,hh.bind_protocol as bindProtocol
+        FROM company c
+        INNER JOIN
+        (
+        SELECT hotel_id,STATUS,bind_protocol FROM hotel_hr_company WHERE hr_id = #{id} AND STATUS IN (0,3,4,5)
+        ) hh ON c.id = hh.hotel_id
+        <if test="name != null and name !=''">
+            and c.name like concat('%', #{name},'%')
+        </if>
+        <if test="leader != null and leader !=''">
+            and c.leader like concat('%', #{leader},'%')
+        </if>
+        <if test="status != null and status != 50">
+            and hh.status = #{status}
+        </if>
+        <if test="status == 50">
+            and hh.status in (0,5)
+        </if>
+        <if test="serviceType != null and serviceType !=''">
+            and 1 &lt;= (select count(0) from task_type_relation where id = c.id and task_type_id = #{serviceType})
+        </if>
+        where c.company_type = 1
+        order by c.create_time desc
+    </select>
+    <!-- 获取已添加该用人单位的所有人力公司 -->
+    <select id="queryCompanysByHotelId" parameterType="com.microdev.param.CompanyQueryDTO" resultType="java.util.Map">
+        <!--select <include refid="Company_Column_List"/> from company where id IN
+        (select hr_id from hotel_hr_company where hotel_id = #{id} and status = 0)
+        <if test="name != null and name !=''">
+            and name like '%${name}%'
+        </if>
+        <if test="leader != null and leader !=''">
+            and leader like '%${leader}%'
+        </if>
+        order by create_time desc-->
+        SELECT c.name,c.company_type as companyType,c.logo,c.address,c.business_license as businessLicense,c.leader,c.leader_mobile as leaderMobile,c.status,c.confirmed_time as confirmedTime,c.latitude,c.longitude,c.id as pid, hh.status AS bindType,IFNULL(c.area,'') as area,
+        hh.status as relationStatus,hh.bind_protocol as bindProtocol, c.labor_dispatch_card as laborDispatchCard
+        FROM company c
+        INNER JOIN
+        (
+        SELECT hr_id, STATUS,bind_protocol FROM hotel_hr_company WHERE hotel_id = #{id} AND STATUS IN (0,3,4,5)
+        ) hh ON c.id = hh.hr_id
+        <if test="name != null and name !=''">
+            and c.name like concat('%', #{name},'%')
+        </if>
+        <if test="leader != null and leader !=''">
+            and c.leader like concat('%', #{leader},'%')
+        </if>
+        <if test="status != null and status != 50">
+        and hh.status = #{status}
+        </if>
+        <if test="status == 50">
+            and hh.status in (0,5)
+        </if>
+        <if test="serviceType != null and serviceType !=''">
+            and 1 &lt;= (select count(0) from task_type_relation where id = c.id and task_type_id = #{serviceType})
+        </if>
+        order by c.create_time desc
+    </select>
+    <!-- 获取用人单位可以添加的人力公司 -->
+    <select id="queryNotCompanysByHotelId" parameterType="java.lang.String" resultType="com.microdev.model.Company">
+        select
+        <include refid="Company_Column_List"/>
+        from company where id not IN
+        (select hr_id from hotel_hr_company where hotel_id = #{HotelId} and status = 0) and company_type = 2
+    </select>
+    <!-- 获得人力公司可以添加的用人单位 -->
+    <select id="queryNotHotelsByHrId" parameterType="java.lang.String" resultType="com.microdev.model.Company">
+        select
+        <include refid="Company_Column_List"/>
+        from company where id not IN
+        (select hotel_id from hotel_hr_company where hr_id = #{HrId} and status = 0) and company_type = 1
+    </select>
+    <!-- 根据ID查找查找公司信息 -->
+    <select id="findCompanyById" parameterType="java.lang.String" resultType="com.microdev.model.Company">
+        select
+        <include refid="Company_Column_List"/>
+        from company where id = #{Id}
+    </select>
+    <!-- 添加人力公司 -->
+    <insert id="save" parameterType="com.microdev.model.Company">
+        insert into company values (#{pid},#{create_time},#{deleted},#{modify_time},
+        #{address},#{business_license},#{company_type},#{confirmed_time},#{latitude},#{leader},
+        #{leader_mobile},#{logo},#{longitude},#{name},#{status})
+    </insert>
+    <insert id="insertAreaRelation">
+        insert into user_area values(#{id},#{code},#{level},#{name})
+    </insert>
+    <insert id="insertAreaRelationBatch" parameterType="java.util.List">
+        insert into user_area (id, area_id, area_level, area_name) values
+        <foreach collection="list" separator="," item="item">
+            (#{item.id},#{item.code},#{item.level},#{item.name})
+        </foreach>
+    </insert>
+    <!-- 修改人力公司 -->
+    <update id="update" parameterType="com.microdev.model.Company">
+        update company set deleted = #{deleted},modify_time = #{modify_time},address = #{address},business_license = #{business_license},
+        company_type = #{company_type},confirmed_time = #{confirmed_time},latitude = #{latitude},leader = #{leader},leader_mobile = #{leader_mobile},
+        logo = #{logo},longitude = #{longitude},name = #{name},status = #{status} where id = #{id}
+    </update>
+    <select id="queryByworkerId" resultType="com.microdev.model.Company">
+        select
+        <include refid="Company_Column_List"/>
+        from company where id IN
+        (select DISTINCT company_id from user_company where user_id = #{userId})
+    </select>
+    <select id="findFirstByLeaderMobile" resultType="com.microdev.model.Company">
+        select
+        <include refid="Company_Column_List"/>
+        from company where leader_mobile = #{mobile} limit 1
+    </select>
+    <insert id="insertCompanyArea">
+        insert into area_relation values(#{id},#{areaId},#{idType})
+    </insert>
+    <insert id="insertCompanyAreaBatch" parameterType="java.util.List">
+        insert into area_relation (id, area_id, id_type) values
+        <foreach collection="list" separator="," item="item">
+            (#{item.id},#{item.areaId},#{item.idType})
+        </foreach>
+    </insert>
+
+    <select id="selectExamineCompanies" resultType="java.util.Map">
+        SELECT c.name,c.address,c.logo,c.leader,c.leader_mobile,c.status,m.id AS messageId FROM company c INNER JOIN
+(SELECT id,hotel_id,create_time FROM message WHERE STATUS = 0 AND hr_company_id = #{hrCompanyId} AND apply_type = 2 AND applicant_type = 3 and message_code = 'applyBindMessage') m ON c.id = m.hotel_id ORDER BY m.create_time DESC
+    </select>
+
+    <select id = "selectCooperateWorker" resultType="java.util.Map" parameterType="com.microdev.param.QueryCooperateRequest">
+      SELECT u.activated,u.avatar,u.email,u.mobile,u.nickname,u.sex, uc.status AS bindType
+        , w.idcard_back as idCardBack, w.idcard_front as idCardFront, w.idcard_number as idCardNumber,
+        w.health_card as healthCard, w.active_companys as activeCompanys, w.status, w.handheld_identity
+        as handHeldIdentity, w.stature ,w.weight, w.education FROM (select * from USER
+      <where>
+          <if test="nickname != null">
+              and nickname like concat('%', #{nickname}, '%')
+          </if>
+          <if test="mobile != null">
+              and mobile like concat('%', #{mobile}, '%')
+          </if>
+      </where>
+      ) u INNER JOIN
+    (
+    SELECT user_id,STATUS FROM user_company WHERE company_id = #{id} AND STATUS IN (0,1,3)
+    ) uc ON uc.user_id = u.id
+    inner join worker w on w.id = u.worker_id
+    </select>
+
+    <select id="selectCooperateHotel" resultType="java.util.Map" parameterType="com.microdev.param.QueryCooperateRequest">
+        SELECT c.id as pid,c.address,c.business_license,c.company_type,c.latitude,c.leader,c.leader_mobile,c.logo,c.name,c.status,m.status as bindType,c.area FROM (
+        select * from company
+        <where>
+          <if test="name != null and name != ''">
+            and name like concat('%', #{name},'%')
+          </if>
+          <if test="leader != null and leader != ''">
+             and leader like concat('%', #{leader},'%')
+          </if>
+        </where>
+        ) c INNER JOIN
+(
+SELECT hotel_id,status FROM hotel_hr_company  WHERE hr_id = #{hrCompanyId} AND STATUS in (0,4)
+) m ON c.id = m.hotel_id
+union
+        (SELECT c.id as pid,c.address,c.business_license,c.company_type,c.latitude,c.leader,c.leader_mobile,c.logo,c.name,c.status,m.status as bindType,c.area FROM (
+        select * from company
+        <where>
+            <if test="name != null and name != ''">
+                and name like concat('%', #{name},'%')
+            </if>
+            <if test="leader != null and leader != ''">
+                and leader like concat('%', #{leader},'%')
+            </if>
+        </where>
+        ) c INNER JOIN
+        (
+        SELECT hotel_id,status FROM hotel_hr_company  WHERE hr_id = #{hrCompanyId} AND STATUS = 3
+         and bind_type = 2) m ON c.id = m.hotel_id)
+    </select>
+
+    <select id="hotelExamineCompany" resultType="java.util.Map" parameterType="com.microdev.param.QueryCooperateRequest">
+      SELECT c.name,c.address,c.logo,c.leader,c.leader_mobile,c.status,m.id AS messageId,c.area,
+      c.active_workers as activeWorkers, c.active_companys as activeCompanys  FROM (select * from company
+        <where>
+            <if test="name != null">
+                and name like concat('%', #{name}, '%')
+            </if>
+            <if test="leader != null">
+                and leader like concat('%', #{leader}, '%')
+            </if>
+        </where>
+      ) c INNER JOIN
+(SELECT id,hr_company_id,create_time FROM message WHERE STATUS = 0 AND hotel_id = #{hotelId} AND apply_type = 3 AND applicant_type = 2 and message_type = 13) m ON c.id = m.hr_company_id ORDER BY m.create_time DESC
+    </select>
+    <select id="queryGrade" resultType="java.lang.Integer">
+        select CAST(avg(s.level) as DECIMAL(18,1)) as `level` from bill b inner join service_comment s on b.id = s.bill_id
+        <where>
+            <if test="type == 'hr'">
+               b.hr_company_id = #{id} and pay_type = 2
+            </if>
+            <if test="type == 'hotel'">
+              and b.hotel_id = #{id} and pay_type = 1
+            </if>
+        </where>
+    </select>
+
+    <select id = "selectCompanyCount" resultType="java.lang.Integer">
+        select count(1) from company where company_type = #{companyType}
+    </select>
+
+    <select id = "selectHotelInfo" resultType="com.microdev.param.EmployerInfo">
+        select name,logo,business_license as businessLicense, leader, leader_mobile as mobile,
+        CONCAT(IFNULL(AREA, ''),IFNULL(address, '')) AS address, case status when 0 then '未审核' when 1 then '已核准'
+        when 2 then '已冻结' when -1 then '已注销' end as status, poll_code as origin
+        from company where company_type = #{companyType} order by create_time desc
+    </select>
+
+    <select id = "selectHrInfo" resultType="com.microdev.param.HrInfo">
+        select name,logo,business_license as businessLicense,labor_dispatch_card as laborDispatchCard, leader, leader_mobile as mobile,
+        CONCAT(IFNULL(AREA, ''),IFNULL(address, '')) AS address, case status when 0 then '未审核' when 1 then '已核准' when 2 then '已冻结' when -1 then '已注销' end as status, poll_code as origin
+        from company where company_type = #{companyType} order by create_time desc
+    </select>
+    <select id="queryWorkers" resultType="java.util.Map"></select>
+</mapper>

@@ -1,0 +1,513 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.microdev.mapper.TaskWorkerMapper">
+    <sql id="TaskWorker_Query_List">
+    id as pid, create_time, deleted, modify_time,
+    confirmed_date, have_pay_money, minutes, no_promise, refused_reason, repast_times,
+    settled, settled_date, should_pay_money, status, worker_id, task_hr_id, user_id, user_name,hourly_pay,hr_company_name,hotel_name,
+        hotel_id,from_date,to_date,day_start_time,day_end_time,task_type_code,task_type_text,task_content,hr_company_id,hotel_task_id,verification,un_confirmed_pay,
+        settlement_period,settlement_num,type
+</sql>
+    <select id="findFirstById" resultType="com.microdev.model.TaskWorker" parameterType="java.lang.String">
+        select
+        <include refid="TaskWorker_Query_List"/>
+        from task_worker where id = #{taskWorkerId}
+    </select>
+
+    <update id="updateByPrimaryKey" parameterType="java.util.Map">
+        update task_worker
+        <set>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="refusedReason != null and refusedReason != ''">
+                refused_reason = #{refusedReason},
+            </if>
+            <if test="noPromise != null">
+                no_promise = #{noPromise},
+            </if>
+            <if test="settled != null">
+                settled = #{settled},
+            </if>
+            <if test="settledDate != null">
+                settled_date = #{settledDate},
+            </if>
+            <if test="minutes != null">
+                minutes = #{minutes},
+            </if>
+            <if test="shouldPayMoney != null">
+                should_pay_money = #{shouldPayMoney},
+            </if>
+            <if test="havePayMoney != null">
+                have_pay_money = #{havePayMoney},
+            </if>
+
+        </set>
+        where id = #{pid}
+    </update>
+
+    <update id="update" parameterType="com.microdev.model.TaskWorker">
+        update task_worker set deleted = #{deleted},modify_time = #{modifyTime},confirmed_date = #{confirmedDate},
+        from_date = #{from_date},have_pay_money = #{havePayMoney},minutes = #{minutes},no_promise = #{noPromise},
+        refused_reason = #{refusedReason},repast_times = #{repastTimes},settled = #{settled},settled_date = #{settledDate},
+        should_pay_money = #{shouldPayMoney},status = #{status},to_date = #{toDate},worker_id = #{workerId},task_hr_id = #{taskHrId},user_id =
+        #{userId},day_start_time = #{dayStartTime},day_end_time = #{dayEndTime},user_name = #{userName},hourly_pay = #{hourlyPay},hr_company_name =
+        #{hrCompanyName},hotel_name = #{hotelName} where id = #{pid}
+    </update>
+    <insert id="save" parameterType="com.microdev.model.TaskWorker">
+        insert into task_worker
+        values(#{pid},#{createTime},#{deleted},#{modifyTime},#{confirmedDate},#{fromDate},
+        #{havePayMoney},#{minutes},#{noPromise},#{refusedReason},#{repastTimes},#{settled},#{settledDate},#{shouldayMoney},
+        #{status},#{toDate},#{workerd},#{taskHrId},#{userId},#{dayStartTime},#{dayEndTime},#{userName},#{hourlyPay}, #{hrCompanyName},#{hotelName})
+    </insert>
+    <select id="findWorkerNowTask" resultType="com.microdev.model.TaskWorker">
+        select
+        <include refid="TaskWorker_Query_List"/>
+        from task_worker
+        where user_id = #{userId} and status = 1 and to_date &gt;= #{nowTime} and from_date &lt;= now()
+        and day_start_time &lt;= #{time} and day_end_time &gt;=#{timeA}
+        and deleted = 0 and status != 3
+        order by create_time desc limit 1
+    </select>
+    <select id="findWorkerNextTask" resultType="com.microdev.model.TaskWorker">
+        select
+        <include refid="TaskWorker_Query_List"/>
+        from task_worker
+        where user_id = #{userId} and status = 1 and to_date &gt;= now() and from_date &lt;= #{nowTime}
+        and day_start_time &gt;= #{time}
+        and deleted = 0 and status != 3
+        order by from_date asc limit 1
+    </select>
+    <select id="findWorkerBeforeTask" resultType="com.microdev.model.TaskWorker">
+        select
+        <include refid="TaskWorker_Query_List"/>
+        from task_worker
+        where user_id = #{userId} and status = 1 and to_date &lt;= #{nowTime,jdbcType=TIMESTAMP} and deleted = 0
+        order by to_date desc limit 1
+    </select>
+    <update id="addMinutes">
+        UPDATE task_worker SET minutes = minutes + #{minutes}, should_pay_money = should_pay_money + #{shouldPayMoney} Where id = #{taskWorkerId}
+    </update>
+    <update id="updateStatus">
+        update task_worker set status = #{status} where id = #{workerTaskId}
+    </update>
+    <select id="findByUserId" resultType="com.microdev.model.TaskWorker" parameterType="java.lang.String">
+        select
+        <include refid="TaskWorker_Query_List"/>
+        from task_worker
+        where user_id = #{userId} and status in (1,4)
+    </select>
+    <select id="findAll" parameterType="com.microdev.param.TaskWorkerQuery" resultType="com.microdev.model.TaskWorker">
+        select
+        t.id as pid, t.create_time, t.deleted, t.modify_time,CAST(t.un_confirmed_pay as DECIMAL(18,2)) as unConfirmedPay,t.settlement_period as settlementPeriod,t.settlement_num as settlementNum,
+        t.confirmed_date, CAST(t.have_pay_money as DECIMAL(18,2)) as havePayMoney, t.minutes, t.no_promise, t.refused_reason, t.repast_times,CAST(t.should_pay_money - t.have_pay_money - t.un_confirmed_pay as DECIMAL(18,2)) as  paidPayMoney,
+        t.settled, t.settled_date, CAST(t.should_pay_money as DECIMAL(18,2)) as shouldPayMoney, t.status, t.worker_id, t.task_hr_id, t.user_id, t.user_name,t.hourly_pay,t.hr_company_name,t.hotel_name,
+        t.hotel_id,t.from_date,t.to_date,t.day_start_time,t.day_end_time,t.task_type_code,t.task_type_text,t.task_content,t.hr_company_id,t.hotel_task_id,t.type as type
+        from task_worker t left join company c on t.hr_company_id = c.id
+        <where>
+            <if test="hrCompanyId != null and hrCompanyId !=''">
+                c.id = #{hrCompanyId}
+            </if>
+            <if test="workerId != null and workerId !=''">
+                and t.worker_id = #{workerId}
+            </if>
+            <if test="fromDate != null">
+                and t.from_date &gt;= #{fromDate}
+            </if>
+            <if test="type != null">
+                and t.type = #{type}
+            </if>
+            <if test="hrCompanyName != null and hrCompanyName !=''">
+                and c.name like concat('%', #{hrCompanyName},'%')
+            </if>
+            <if test="toDate != null">
+                and t.to_date &lt;= #{toDate}
+            </if>
+            <if test="taskTypeCode != null and taskTypeCode !=''">
+                and t.task_type_code = #{taskTypeCode}
+            </if>
+            <if test="hrTaskId !=null and hrTaskId !=''">
+                and t.task_hr_id = #{hrTaskId}
+            </if>
+            <if test="taskStatus !=null and taskStatus !=''">
+                <if test="taskStatus == 6">
+                    and t.status = 1 and t.to_date &gt;= now()
+                </if>
+                <if test="taskStatus &lt; 3">
+                   and  t.status = #{taskStatus}
+                </if>
+                <if test="taskStatus == 4">
+                    and t.to_date &gt;= now() and t.from_date &lt;= now() and t.status = 1
+                </if>
+                <if test="taskStatus == 5">
+                    and ((t.to_date &lt; now() and t.status = 1) or t.status = 3)
+                </if>
+                <if test="taskStatus == 7">
+                    and ((t.from_date &lt; now() and t.status = 1) or t.status = 3)
+                </if>
+                <if test="taskStatus == 8">
+                    and (t.status != 0 and t.status != 2)
+                </if>
+            </if>
+            <if test="payStatus != null and payStatus !=''">
+                <if test="payStatus == 1">
+                    and t.have_pay_money == 0
+                </if>
+                <if test="payStatus == 2">
+                    and t.have_pay_money &gt;= 0 and t.should_pay_money != t.have_pay_money
+                </if>
+                <if test="payStatus == 3">
+                    and t.have_pay_money &gt;= 0 and t.should_pay_money = t.have_pay_money
+                </if>
+            </if>
+        </where> order by t.create_time desc
+    </select>
+    <select id="findByHrTaskId" resultType="com.microdev.model.TaskWorker">
+        select
+        <include refid="TaskWorker_Query_List"/>
+        from task_worker
+        where task_hr_id =#{HrTaskId}
+    </select>
+    <select id="queryHrCompanyBill" resultType="com.microdev.model.TaskWorker" parameterType="com.microdev.param.BillRequest">
+        select  sum(CAST(w.should_pay_money as DECIMAL(18,2))) as should_pay_money,sum(CAST(w.have_pay_money as DECIMAL(18,2))) as have_pay_money,sum(w.minutes) as minutes,CAST(sum(w.should_pay_money) - sum(w.have_pay_money) -sum(w.un_confirmed_pay) as DECIMAL(18,2)) as paidPayMoney,
+        w.user_id,u.nickname as userName from task_worker w left join user u on w.user_id = u.id
+        where w.hr_company_id = #{id}
+        <if test = "name != null and name != ''">
+            and u.nickname like concat('%', #{name},'%')
+        </if>
+        group by u.id,u.nickname
+
+    </select>
+    <select id="queryWorkerBill" resultType="com.microdev.model.TaskHrCompany" parameterType="com.microdev.param.BillRequest">
+        select  sum(w.should_pay_money) as should_pay_money,sum(w.have_pay_money) as have_pay_money,sum(w.minutes) as minutes,sum(w.un_confirmed_pay) as unConfirmedPay,sum(w.should_pay_money) - sum(w.have_pay_money) - sum(w.un_confirmed_pay) as paidPayMoney,
+        h.hr_company_id,c.name as hrCompanyName  from task_worker w left join task_hr_company h on w.task_hr_id = h.id left join company c on h.hr_company_id = c.id
+        where w.worker_id = #{id} and w.type = 0 group by h.hr_company_id,c.name
+        <if test = "name != null and name != ''">
+            and c.name = #{name}
+        </if>
+    </select>
+    <select id="queryWorkerBillHotel" resultType="com.microdev.model.TaskWorker" parameterType="com.microdev.param.BillRequest">
+        select  sum(w.should_pay_money) as should_pay_money,sum(w.have_pay_money) as have_pay_money,sum(w.minutes) as minutes,sum(w.un_confirmed_pay) as unConfirmedPay,sum(w.should_pay_money) - sum(w.have_pay_money) - sum(w.un_confirmed_pay) as paidPayMoney,
+        h.hotel_id as hotelId,c.name as hotelName from task_worker w left join task h on w.hotel_task_id = h.id left join company c on h.hotel_id = c.id
+        where w.worker_id = #{id} and w.type = 1 group by h.hotel_id,c.name
+        <if test = "name != null and name != ''">
+            and c.name = #{name}
+        </if>
+    </select>
+    <select id="selectHrId" parameterType="java.lang.String" resultType="java.util.Map">
+        SELECT th.`hotel_id` AS hotelId, th.`hr_company_id` AS hrCompanyId, tw.`hotel_name` AS hotelName,th.id as hrTaskId,th.task_id as taskId,th.task_type_text as taskTypeText,tw.worker_id as workerId
+        FROM task_worker tw
+        INNER JOIN task_hr_company th
+        ON tw.`task_hr_id` = th.`id`
+        WHERE tw.id = #{taskWorkerId}
+    </select>
+    <select id="selectUserAndWorkerId" parameterType="java.lang.String" resultType="com.microdev.param.WorkerCancelTask">
+        SELECT tw.`worker_id` AS workerId, u.`id` AS userId, u.`nickname` AS username, tw.hotel_id AS hotelId,
+        th.hr_company_id as hrId,task_hr_id as taskHrId,tw.hotel_task_id as taskId,tw.day_start_time,tw.day_end_time
+        FROM (SELECT * FROM task_worker WHERE id = #{id})tw
+        INNER JOIN USER u ON tw.`user_id` = u.`id`
+        left JOIN task_hr_company th ON th.id = tw.task_hr_id
+    </select>
+    <select id="selectHotelAndWorkerId" parameterType="java.lang.String" resultType="com.microdev.param.WorkerCancelTask">
+        SELECT tw.`worker_id` AS workerId, u.`id` AS userId, u.`nickname` AS username, th.hotel_id AS hotelId,
+        null as hrId,null as taskHrId,th.id as taskId,tw.day_start_time,tw.day_end_time
+        FROM (SELECT * FROM task_worker WHERE id = #{id})tw
+        INNER JOIN USER u ON tw.`user_id` = u.`id`
+        INNER JOIN task th ON th.id = tw.hotel_task_id
+    </select>
+    <select id="selectTaskWorkById" parameterType="java.lang.String" resultType="java.util.Map">
+        SELECT u.worker_id AS workerId, u.`nickname` AS workerName, CASE u.`sex` WHEN 'MALE' THEN 'MALE' WHEN 'FEMALE' THEN 'FEMALE' ELSE 'UNKNOWN' END AS gender,
+        IFNULL(u.avatar, '') AS headImage,u.mobile AS mobile, u.birthday AS birthday,tw.refused_reason as refusedReason,
+        tw.refused_reason AS refusedReason,tw.status AS taskStatus,tw.repast_times AS repastTimes, tw.minutes AS minutes,
+        IFNULL(tw.have_pay_money,0.0) AS havePayMoney, IFNULL(tw.should_pay_money,0.0) AS shouldPayMoney, IFNULL(tw.should_pay_money - tw.have_pay_money,0.0) AS waitPayMoney,
+        tw.id AS taskWorkerId
+        FROM (
+        SELECT * FROM task_worker
+        WHERE `task_hr_id` = #{taskHrId}
+        ) tw
+        INNER JOIN USER u
+        ON tw.`user_id` = u.`id`
+    </select>
+    <select id="selectTaskWorkByHotelId" parameterType="java.lang.String" resultType="java.util.Map">
+        SELECT u.worker_id AS workerId, u.`nickname` AS workerName, CASE u.`sex` WHEN 'MALE' THEN 'MALE' WHEN 'FEMALE' THEN 'FEMALE' ELSE 'UNKNOWN' END AS gender,
+        IFNULL(u.avatar, '') AS headImage,u.mobile AS mobile, u.birthday AS birthday,tw.refused_reason as refusedReason,
+        tw.refused_reason AS refusedReason,tw.status AS taskStatus,tw.repast_times AS repastTimes, tw.minutes AS minutes,
+        IFNULL(tw.have_pay_money,0.0) AS havePayMoney, IFNULL(tw.should_pay_money,0.0) AS shouldPayMoney, IFNULL(tw.should_pay_money - tw.have_pay_money,0.0) AS waitPayMoney,
+        tw.id AS taskWorkerId
+        FROM (
+        SELECT * FROM task_worker
+        WHERE `hotel_task_id` = #{hotelId}
+        and type = 1
+        ) tw
+        INNER JOIN USER u
+        ON tw.`user_id` = u.`id`
+    </select>
+
+    <select id="selectTaskWorkCById" parameterType="java.lang.String" resultType="java.util.Map">
+        SELECT u.worker_id AS workerId, u.`nickname` AS workerName, CASE u.`sex` WHEN 'MALE' THEN 'MALE' WHEN 'FEMALE' THEN 'FEMALE' ELSE 'UNKNOWN' END AS gender,
+        IFNULL(u.avatar, '') AS headImage,u.mobile AS mobile, u.birthday AS birthday,tw.refused_reason as refusedReason,u.age as age,
+        tw.refused_reason AS refusedReason,tw.status AS taskStatus,tw.repast_times AS repastTimes, tw.minutes AS minutes,
+        IFNULL(tw.have_pay_money,0.0) AS havePayMoney, IFNULL(tw.should_pay_money,0.0) AS shouldPayMoney, IFNULL(tw.should_pay_money - tw.have_pay_money,0.0) AS waitPayMoney,
+        tw.id AS taskWorkerId
+        FROM (
+        SELECT * FROM task_worker
+        WHERE `task_hr_id` = #{taskHrId} and (status = 1 or status = 3)
+        ) tw
+        INNER JOIN USER u
+        ON tw.`user_id` = u.`id`
+    </select>
+
+    <select id="selectCurTasCount" parameterType="com.microdev.param.TaskWorkerQuery" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM task_worker WHERE worker_id = #{workerId}
+        AND STATUS = 1 AND to_date >= NOW()
+    </select>
+    <select id="findAllh" resultType="com.microdev.model.TaskWorker" parameterType="com.microdev.param.TaskWorkerQuery" >
+        select
+        t.id as pid, t.create_time, t.deleted, t.modify_time,un_confirmed_pay as unConfirmedPay,
+        t.confirmed_date, CAST(t.have_pay_money as DECIMAL(18,2)) as havePayMoney, t.minutes, t.no_promise, t.refused_reason, t.repast_times,CAST(t.should_pay_money - t.have_pay_money - t.un_confirmed_pay as DECIMAL(18,2)) as  paidPayMoney,
+        t.settled, t.settled_date, t.should_pay_money, t.status, t.worker_id, t.task_hr_id, t.user_id, t.user_name,t.hourly_pay,t.hr_company_name,t.hotel_name,
+        t.hotel_id,t.from_date,t.to_date,t.day_start_time,t.day_end_time,t.task_type_code,t.task_type_text,t.task_content,t.hr_company_id,t.hotel_task_id,t.type as type
+        from task_worker t left join company c on t.hotel_id = c.id
+        <where>
+            <if test="workerId != null and workerId !=''">
+                t.worker_id = #{workerId}
+            </if>
+            <if test="fromDate != null">
+                and t.from_date &gt;= #{fromDate}
+            </if>
+            <if test="type != null">
+                and t.type = #{type}
+            </if>
+            <if test="hotelName != null and hotelName !=''">
+                and c.name like concat('%', #{hotelName},'%')
+            </if>
+            <if test="hotelId != null and hotelId !=''">
+                and c.id = #{hotelId}
+            </if>
+            <if test="toDate != null">
+                and t.to_date &lt;= #{toDate}
+            </if>
+            <if test="taskTypeCode != null and taskTypeCode !=''">
+                and t.task_type_code = #{taskTypeCode}
+            </if>
+            <if test="taskStatus !=null and taskStatus !=''">
+                <if test="taskStatus == 6">
+                    and t.status = 1 and t.to_date &gt;= now()
+                </if>
+                <if test="taskStatus &lt; 3">
+                    and  t.status = #{taskStatus}
+                </if>
+                <if test="taskStatus == 4">
+                    and t.to_date &gt;= now() and t.from_date &lt;= now() and t.status = 1
+                </if>
+                <if test="taskStatus == 5">
+                    and ((t.to_date &lt; now() and t.status = 1) or t.status = 3)
+                </if>
+                <if test="taskStatus == 7">
+                    and ((t.from_date &lt; now() and t.status = 1) or t.status = 3)
+                </if>
+            </if>
+            <if test="payStatus != null and payStatus !=''">
+                <if test="payStatus == 1">
+                    and t.have_pay_money == 0
+                </if>
+                <if test="payStatus == 2">
+                    and t.have_pay_money &gt;= 0 and t.should_pay_money != t.have_pay_money
+                </if>
+                <if test="payStatus == 3">
+                    and t.have_pay_money &gt;= 0 and t.should_pay_money = t.have_pay_money
+                </if>
+            </if>
+        </where> order by t.create_time asc
+    </select>
+
+    <select id = "selectTaskWorkerDate" resultType="com.microdev.model.TaskDateInfo">
+        select from_date, to_date, day_start_time, day_end_time
+        from task_worker	where id = #{id}
+    </select>
+
+    <select id = "selectByHrTaskList" resultType="com.microdev.model.TaskWorker">
+        select <include refid="TaskWorker_Query_List"/> from task_worker where task_hr_id in
+        <foreach collection="list" separator="," item="item" open="(" close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <select id = "selectByUserHr" resultType="com.microdev.model.TaskWorker">
+        SELECT <include refid="TaskWorker_Query_List" /> FROM task_worker WHERE user_id = #{userId} AND hr_company_id = #{hrId}
+        AND STATUS IN (0,1,4) AND from_date &lt;= NOW() AND to_date &gt;= NOW()
+    </select>
+
+    <select id="findAllCount" parameterType="com.microdev.param.TaskWorkerQuery" resultType="java.lang.Integer">
+        select count(1) from (
+        select
+        t.id as pid
+        from task_worker t left join company c on t.hr_company_id = c.id
+        <where>
+            <if test="hrCompanyId != null and hrCompanyId !=''">
+                c.id = #{hrCompanyId}
+            </if>
+            <if test="workerId != null and workerId !=''">
+                and t.worker_id = #{workerId}
+            </if>
+            <if test="fromDate != null">
+                and t.from_date &gt;= #{fromDate}
+            </if>
+            <if test="hrCompanyName != null and hrCompanyName !=''">
+                and c.name like concat('%', #{hrCompanyName},'%')
+            </if>
+            <if test="toDate != null">
+                and t.to_date &lt;= #{toDate}
+            </if>
+            <if test="taskTypeCode != null and taskTypeCode !=''">
+                and t.task_type_code = #{taskTypeCode}
+            </if>
+            <if test="hrTaskId !=null and hrTaskId !=''">
+                and t.task_hr_id = #{hrTaskId}
+            </if>
+            <if test="taskStatus !=null and taskStatus !=''">
+                <if test="taskStatus == 6">
+                    and t.status = 1 and t.to_date &gt;= now()
+                </if>
+                <if test="taskStatus &lt; 3">
+                    and t.status = #{taskStatus}
+                </if>
+                <if test="taskStatus == 4">
+                    and t.to_date &gt;= now() and t.from_date &lt;= now() and t.status = 1
+                </if>
+                <if test="taskStatus == 5">
+                    and ((t.to_date &lt; now() and t.status = 1) or t.status = 3)
+                </if>
+                <if test="taskStatus == 7">
+                    and ((t.from_date &lt; now() and t.status = 1) or t.status = 3)
+                </if>
+            </if>
+            <if test="payStatus != null and payStatus !=''">
+                <if test="payStatus == 1">
+                    and t.have_pay_money == 0
+                </if>
+                <if test="payStatus == 2">
+                    and t.have_pay_money &gt;= 0 and t.should_pay_money != t.have_pay_money
+                </if>
+                <if test="payStatus == 3">
+                    and t.have_pay_money &gt;= 0 and t.should_pay_money = t.have_pay_money
+                </if>
+            </if>
+        </where>
+        ) m
+    </select>
+
+
+    <select id="findAllhCount" resultType="java.lang.Integer" parameterType="com.microdev.param.TaskWorkerQuery" >
+        select count(1) from (
+        select
+        t.id as pid
+        from task_worker t left join company c on t.hotel_id = c.id
+        <where>
+            <if test="workerId != null and workerId !=''">
+                t.worker_id = #{workerId}
+            </if>
+            <if test="fromDate != null">
+                and t.from_date &gt;= #{fromDate}
+            </if>
+            <if test="hotelName != null and hotelName !=''">
+                and c.name like concat('%', #{hotelName},'%')
+            </if>
+            <if test="toDate != null">
+                and t.to_date &lt;= #{toDate}
+            </if>
+            <if test="taskTypeCode != null and taskTypeCode !=''">
+                and t.task_type_code = #{taskTypeCode}
+            </if>
+            <if test="taskStatus !=null and taskStatus !=''">
+                <if test="taskStatus == 6">
+                    and t.status = 1 and t.to_date &gt;= now()
+                </if>
+                <if test="taskStatus &lt; 3">
+                    and  t.status = #{taskStatus}
+                </if>
+                <if test="taskStatus == 4">
+                    and t.to_date &gt;= now() and t.from_date &lt;= now() and t.status = 1
+                </if>
+                <if test="taskStatus == 5">
+                    and ((t.to_date &lt; now() and t.status = 1) or t.status = 3)
+                </if>
+                <if test="taskStatus == 7">
+                    and ((t.from_date &lt; now() and t.status = 1) or t.status = 3)
+                </if>
+            </if>
+            <if test="payStatus != null and payStatus !=''">
+                <if test="payStatus == 1">
+                    and t.have_pay_money == 0
+                </if>
+                <if test="payStatus == 2">
+                    and t.have_pay_money &gt;= 0 and t.should_pay_money != t.have_pay_money
+                </if>
+                <if test="payStatus == 3">
+                    and t.have_pay_money &gt;= 0 and t.should_pay_money = t.have_pay_money
+                </if>
+            </if>
+        </where>
+        ) m
+    </select>
+
+    <select id="findWorkerTask" parameterType="com.microdev.param.TaskWorkerQuery" resultType="java.util.Map">
+        select
+        t.refused_reason as refuseReason, t.status,IFNULL(t.hourly_pay, 0) as hourlyPay,t.hr_company_name as hrName,t.hotel_name as hotelName,
+        date_format(t.from_date, '%Y.%m.%d') as fromDate,date_format(t.to_date, '%Y.%m.%d') as toDate, date_format(t.day_start_time, '%H:%i') as dayStartTime, date_format(t.day_end_time, '%H:%i') as dayEndTime,t.task_type_text as taskTypeText,t.task_content as taskContent, c2.leader_mobile as leaderMobile, c2.leader
+        from task_worker t left join company c on t.hr_company_id = c.id
+        left join company c2 on t.hotel_id = c2.id
+        <where>
+            <if test="hrCompanyId != null and hrCompanyId !=''">
+                c.id = #{hrCompanyId}
+            </if>
+            <if test="workerId != null and workerId !=''">
+                and t.worker_id = #{workerId}
+            </if>
+            <if test="fromDate != null">
+                and t.from_date &gt;= #{fromDate}
+            </if>
+            <if test="hrCompanyName != null and hrCompanyName !=''">
+                and c.name like concat('%', #{hrCompanyName},'%')
+            </if>
+            <if test="toDate != null">
+                and t.to_date &lt;= #{toDate}
+            </if>
+            <if test="taskTypeCode != null and taskTypeCode !=''">
+                and t.task_type_code = #{taskTypeCode}
+            </if>
+            <if test="hrTaskId !=null and hrTaskId !=''">
+                and t.task_hr_id = #{hrTaskId}
+            </if>
+            <if test="taskStatus !=null and taskStatus !=''">
+                <if test="taskStatus == 6">
+                    and t.status = 1 and t.to_date &gt;= now()
+                </if>
+                <if test="taskStatus &lt; 3">
+                    and  t.status = #{taskStatus}
+                </if>
+                <if test="taskStatus == 4">
+                    and t.to_date &gt;= now() and t.from_date &lt;= now() and t.status = 1
+                </if>
+                <if test="taskStatus == 5">
+                    and ((t.to_date &lt; now() and t.status = 1) or t.status = 3)
+                </if>
+                <if test="taskStatus == 7">
+                    and ((t.from_date &lt; now() and t.status = 1) or t.status = 3)
+                </if>
+            </if>
+            <if test="payStatus != null and payStatus !=''">
+                <if test="payStatus == 1">
+                    and t.have_pay_money == 0
+                </if>
+                <if test="payStatus == 2">
+                    and t.have_pay_money &gt;= 0 and t.should_pay_money != t.have_pay_money
+                </if>
+                <if test="payStatus == 3">
+                    and t.have_pay_money &gt;= 0 and t.should_pay_money = t.have_pay_money
+                </if>
+            </if>
+        </where>
+        order by t.create_time desc
+    </select>
+</mapper>

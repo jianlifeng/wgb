@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.microdev.mapper.HotelHrCompanyMapper">
+    <sql id="update_Column_List">
+        set
+        deleted = #{deleted},modify_time = #{modifyTime},bind_time = #{bindTime},
+        bind_type = #{bindType},relieve_time = #{relieveTime},relieve_type = #{relieveType},
+        status = #{status},bind_protocol = #{bindProtocol}
+    </sql>
+    <sql id="query_Column_List">
+        id as pid,create_time ,deleted ,modify_time ,bind_time ,bind_type ,relieve_time ,relieve_type ,
+        status ,hr_id ,hotel_id,bind_protocol
+    </sql>
+    <select id="save" parameterType="com.microdev.model.HotelHrCompany">
+        insert into hotel_hr_company values (#{pid},#{createTime},#{deleted},#{modifyTime},#{bindTime},
+        #{bindType},#{relieveTime},#{relieveType},#{status},#{hrId},#{hotelId}, #{bindProtocol})
+    </select>
+    <select id="findOneHotelHr" resultType="com.microdev.model.HotelHrCompany">
+        SELECT
+        <include refid="query_Column_List"/>
+        FROM hotel_hr_company Where hotel_id = #{hotelId} and hr_id = #{hrId} LIMIT 1
+    </select>
+    <update id="update" parameterType="com.microdev.model.HotelHrCompany">
+        update hotel_hr_company
+        <include refid="update_Column_List"/>
+        where id = #{pid}
+    </update>
+
+    <insert id="saveBatch" parameterType="java.util.List">
+        insert into hotel_hr_company(id, create_time, deleted, modify_time, bind_time, bind_type, relieve_time, relieve_type, status, hr_id, hotel_id,bind_protocol) values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.pid}, #{item.createTime},#{item.deleted}, #{item.modifyTime}, #{item.bindTime}, #{item.bindType}, #{item.relieveTime}, #{item.relieveType},#{item.status}, #{item.hrId}, #{item.hotelId},#{item.bindProtocol})
+        </foreach>
+    </insert>
+
+    <select id="selectCooperateHr" resultType="java.util.Map">
+      SELECT f.*,IFNULL(m.amount,0) AS num FROM
+(SELECT cy.name,cy.`logo`,cy.address,cy.`leader`,cy.id,cy.leader_mobile as leaderMobile,cy.`status`,hy.status as bindType,cy.area FROM company cy
+INNER JOIN
+(
+SELECT hr_id,create_time,status FROM hotel_hr_company WHERE hotel_id = #{hotelId} AND STATUS in (0,4)) hy ON cy.id = hy.hr_id
+<where>
+    <if test="name != null and name != ''">
+      and name like concat('%', #{name} , '%')
+    </if>
+    <if test="leader != null and leader != ''">
+      and leader like concat('%', #{leader}, '%')
+    </if>
+</where>
+ORDER BY hy.create_time DESC
+) f
+LEFT JOIN
+(
+SELECT uy.company_id AS companyId, COUNT(1) AS amount FROM user_company uy WHERE uy.company_id IN
+(
+SELECT hh.hr_id FROM company c
+INNER JOIN
+(
+SELECT hr_id,create_time FROM hotel_hr_company WHERE hotel_id = #{hotelId} AND STATUS in (0,4)
+) hh ON c.id = hh.hr_id
+ORDER BY hh.create_time DESC
+) AND uy.STATUS IN (0,1,3) GROUP BY uy.company_id
+) m
+ON f.id = m.companyId
+union
+        (
+        SELECT f.*,IFNULL(m.amount,0) AS num FROM
+        (SELECT cy.name,cy.`logo`,cy.address,cy.`leader`,cy.id,cy.leader_mobile,cy.`status`,hy.status as bindType,cy.area FROM company cy
+        INNER JOIN
+        (
+        SELECT hr_id,create_time,status FROM hotel_hr_company WHERE hotel_id = #{hotelId} AND STATUS = 3
+         and bind_type = 1) hy ON cy.id = hy.hr_id
+        <where>
+        <if test="name != null and name != ''">
+            and name like concat('%', #{name} , '%')
+        </if>
+        <if test="leader != null and leader != ''">
+            and leader like concat('%', #{leader}, '%')
+        </if>
+        </where>
+        ORDER BY hy.create_time DESC
+        ) f
+        LEFT JOIN
+        (
+        SELECT uy.company_id AS companyId, COUNT(1) AS amount FROM user_company uy WHERE uy.company_id IN
+        (
+        SELECT hh.hr_id FROM company c
+        INNER JOIN
+        (
+        SELECT hr_id,create_time FROM hotel_hr_company WHERE hotel_id = #{hotelId} AND STATUS = 3
+         and bind_type = 1) hh ON c.id = hh.hr_id
+        ORDER BY hh.create_time DESC
+        ) AND uy.STATUS IN (0,1,3) GROUP BY uy.company_id
+        ) m
+        ON f.id = m.companyId
+        )
+    </select>
+
+    <select id="selectIsBind" parameterType="com.microdev.param.HotelHrIdBindDTO" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM hotel_hr_company WHERE hotel_id = #{hotelId} AND hr_id IN
+        <foreach collection="set" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach>
+        AND STATUS IN (1,4)
+    </select>
+
+    <select id="selectIsBIndByCompanyId" parameterType="com.microdev.param.HotelHrIdBindDTO" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM hotel_hr_company WHERE hr_id = #{hrId} AND hotel_id IN
+        <foreach collection="set" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach>
+        AND STATUS IN (1,4)
+    </select>
+
+    <select id = "selectBindCountByHotelId" parameterType="com.microdev.param.HotelHrIdBindDTO" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM hotel_hr_company WHERE hotel_id = #{hotelId} AND hr_id IN
+        <foreach collection="set" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach>
+        AND STATUS IN (0,3)
+    </select>
+
+    <select id = "selectRelieveCountByHotelId" parameterType="com.microdev.param.HotelHrIdBindDTO" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM hotel_hr_company WHERE hotel_id = #{hotelId} AND hr_id IN
+        <foreach collection="set" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach>
+        AND STATUS = 0
+    </select>
+
+    <select id = "selectRelieveCountByHrId" parameterType="com.microdev.param.HotelHrIdBindDTO" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM hotel_hr_company WHERE hr_id = #{hrId} AND hotel_id IN
+        <foreach collection="set" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach>
+        AND STATUS = 0
+    </select>
+
+    <select id = "selectBindCountByHrId" parameterType="com.microdev.param.HotelHrIdBindDTO" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM hotel_hr_company WHERE hr_id = #{hrId} AND hotel_id IN
+        <foreach collection="set" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach>
+        AND STATUS IN (0,3)
+    </select>
+
+    <select id="selectByHrHotelId" resultType="com.microdev.model.HotelHrCompany">
+        select <include refid="query_Column_List"/> from hotel_hr_company
+        where hr_id = #{hrId} and hotel_id = #{hotelId}
+    </select>
+
+</mapper>

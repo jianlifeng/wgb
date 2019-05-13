@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.microdev.mapper.EnrollMapper">
+    <sql id="Enroll_Column_List">
+        id as pid, create_time, deleted, modify_time, enroll_type, enroll_code, enroll_content, enroll_link, enroll_title, msg_link, status,
+        worker_id, worker_task_id ,hotel_id,hr_company_id,applicant_type,apply_type,content,value,request_id,is_task,task_id,hr_task_id,assign
+    </sql>
+    <select id="selectEnrollNum" resultType="java.lang.Integer">
+        select IFNULL(count(id),0) from enroll where request_id = #{id}
+    </select>
+    <select id="selectUnHandleEnrollNum" resultType="java.lang.Integer">
+        select IFNULL(sum(value),0) from enroll where request_id = #{id} and status = 0
+    </select>
+    <select id="selectEnrollWorker" resultType="com.microdev.param.EnrollerResponse">
+        select u.id as userId,e.id as pid,UNIX_TIMESTAMP(e.create_time) as applyTimeL,e.create_time as applyTime,e.worker_id as workerId,u.nickname as workerName,u.avatar as avatar,u.sex as sex,u.age as age,u.mobile as mobile,IFNULL(e.assign,'0') as assignWorkers
+        from enroll e left join user u on e.worker_id = u.worker_id
+        <where>
+            e.request_id = #{noticeId}
+            <if test="type != null">
+                and e.status = #{type}
+            </if>
+        </where>
+        order by e.create_time desc
+    </select>
+    <select id="selectEnrollHr" resultType="com.microdev.param.EnrollerResponse">
+        select u.id as userId,e.id as pid,UNIX_TIMESTAMP(e.create_time) as applyTimeL,e.create_time as applyTime,c.id as hrId,c.name as hrName,c.logo as logo,c.leader_mobile as mobile,e.value as applyWorkers,IFNULL(e.assign,'0') as assignWorkers
+        from enroll e left join company c on e.hr_company_id = c.id left join user u on c.leader_mobile = u.mobile
+        <where>
+            e.request_id = #{noticeId}
+            <if test="type != null">
+                and e.status = #{type}
+            </if>
+        </where>
+        order by e.create_time desc
+    </select>
+    <select id="refuseByNoticeId">
+        update enroll set status = 2 where request_id = #{id} and status = 0;
+    </select>
+    <select id="selectCountNum" resultType="java.lang.Integer">
+        select count(id) from enroll
+        <where>
+            <if test="type == 3">
+                and apply_type = 3 and status = 0 and hotel_id = #{id}
+            </if>
+            <if test="type == 2">
+                and apply_type = 2 and status = 0 and hr_company_id = #{id}
+            </if>
+        </where>
+    </select>
+    <select id="selectEnrollDetails" resultType="com.microdev.param.EnrollDetails">
+        select a.* from(
+        select e.modify_time as handleTime,e.create_time as enrollTime,n.task_type_text as taskTypeText,n.from_date as fromDate,n.to_date as toDate,c.name as hotelName,n.need_workers as needWorkers,n.hour_pay as hourlyPay,null as hrComapnyName,n.id as noticeId,e.status as status,n.type as type,c.logo as hotelLogo,null as hrComapnyLogo,
+        c.id as hotelId,null as hrId,n.limit_pay as limitPay,n.worke_days as workeDays
+        from enroll e left join notice n on e.request_id = n.id left join company c on n.hotel_id = c.id
+        where n.type in (0,2) and e.worker_id = #{workerId}
+        union
+        select e.modify_time as handleTime,e.create_time as enrollTime,t.task_type_text as taskTypeText,t.from_date as fromDate,t.to_date as toDate,null as hotelName,n.need_workers as needWorkers,t.hourly_pay as hourlyPay,c.name as hrComapnyName,n.id as noticeId,e.status as status,n.type as type,null as hotelLogo,c.logo as hrComapnyLogo,
+        null as hotelId,c.id as hrId,n.limit_pay as limitPay,n.worke_days as workeDays
+        from enroll e left join notice n on e.request_id = n.id left join company c on n.hr_company_id = c.id left join task_hr_company t on n.task_id = t.id
+        where n.type = 3 and e.worker_id = #{workerId}
+        union
+        select e.modify_time as handleTime,e.create_time as enrollTime,null as taskTypeText,n.from_date as fromDate,n.to_date as toDate,null as hotelName,n.need_workers as needWorkers,n.hour_pay_range as hourlyPay,c.name as hrComapnyName,n.id as noticeId,e.status as status,n.type as type,null as hotelLogo,c.logo as hrComapnyLogo,
+        null as hotelId,c.id as hrId,n.limit_pay as limitPay,n.worke_days as workeDays
+        from enroll e left join notice n on e.request_id = n.id left join company c on n.hr_company_id = c.id
+        where n.type in (4,5) and e.worker_id = #{workerId}
+        )a
+        <where>
+            <if test="status != null">
+                and a.status = #{status}
+            </if>
+        </where>
+        order by a.enrollTime desc
+
+    </select>
+    <select id="selecthrEnrollDetails" resultType="com.microdev.param.EnrollDetails">
+        select e.modify_time as handleTime,e.create_time as enrollTime,t.task_type_text as taskTypeText,t.from_date as fromDate,t.to_date as toDate,n.need_workers as needWorkers,t.hourly_pay as hourlyPay,c.name as hotelName,n.id as noticeId,e.status as status,1 as type,c.logo as hotelLogo,
+        c.id as hotelId
+        from enroll e left join notice n on e.request_id = n.id left join company c on n.hotel_id = c.id left join task t on n.task_id = t.id
+        where n.type = 1 and e.hr_company_id = #{hrId}
+        <if test="status != null">
+            and e.status = #{status}
+        </if>
+        order by e.create_time desc
+    </select>
+    <select id="selectEnrollCount" resultType="java.util.Map">
+        select
+        (select count(id) from enroll where request_id = #{noticeId} and status = 0) as untreated,
+        (select count(id) from enroll where request_id = #{noticeId} and status = 1) as agreed,
+        (select count(id) from enroll where request_id = #{noticeId} and status = 2) as refused
+        from DUAL
+    </select>
+</mapper>

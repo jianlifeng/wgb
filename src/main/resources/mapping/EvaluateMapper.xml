@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.microdev.mapper.EvaluateMapper">
+    <sql id="Evaluate_Column_List">
+        id as pid, create_time, deleted, modify_time, level, text, type
+    </sql>
+    <delete id="deleteAll">
+        delete from evaluate where type = #{type} and level = #{level}
+    </delete>
+    <select id="queryList" resultType="com.microdev.model.Evaluate" parameterType="com.microdev.param.EvaluateParam">
+        select GROUP_CONCAT(CONCAT(id,':',text) SEPARATOR ',') pid,level,type,GROUP_CONCAT(text SEPARATOR ',') text
+        from evaluate
+        <where>
+            <if test="level != null">
+                and level = #{level}
+            </if>
+            <if test="text != null and text != ''">
+                and text concat('%', #{text},'%')
+            </if>
+            <if test="type != null">
+                and type = #{type}
+            </if>
+        </where>
+        group by level,type
+        order by type,level asc
+
+    </select>
+
+    <select id = "selectLabelsInfo" resultType="java.lang.String">
+        SELECT e.text FROM evaluate_comment_relation cr INNER JOIN
+evaluate e ON e.id = cr.evaluate_id WHERE cr.service_comment_id = #{commentId}
+    </select>
+</mapper>

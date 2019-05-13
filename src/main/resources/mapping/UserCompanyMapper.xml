@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.microdev.mapper.UserCompanyMapper">
+    <sql id="UserCompany_Query_List">
+        id as pid, create_time, deleted, modify_time,
+        all_tasks, company_type, confirmed_date, confirmed_tasks, no_promise_tasks,
+        refused_reason, refused_tasks, relieve_time, status, user_type, company_id, user_id,
+        bind_protocol
+    </sql>
+	<sql id="TaskWorker_Query_List" >
+        id as pid, create_time, deleted, modify_time,
+        confirmed_date, from_date, have_pay_money, minutes, no_promise, refused_reason, repast_times,
+        settled, settled_date, should_pay_money, status, to_date, worker_id, task_hr_id, user_id, day_start_time, day_end_time, user_name,hourly_pay,hr_company_name,hotel_name
+    </sql>
+    <sql id="User_Query_List" >
+        id as pid, create_time, deleted, modify_time, activated, avatar, birthday, email, mobile, nickname, password,
+        sex, user_type, username, worker_id, user_code,age
+    </sql>
+    <update id="addNoPromiseTasks">
+        UPDATE user_company SET no_Promise_Tasks = no_Promise_Tasks + 1 Where user_id = #{userId} and company_id=#{companyId}
+    </update>
+    <select id="findOneUserCompany" resultType="com.microdev.model.UserCompany">
+        SELECT
+        <include refid="UserCompany_Query_List"/>
+        FROM user_company as a Where a.company_id=#{companyId} and a.user_id=#{userId} LIMIT 1
+    </select>
+	<select id="getSelectableWorker" resultType="com.microdev.model.User" parameterType="com.microdev.param.HrQueryWorkerDTO">
+        SELECT u.id AS pid, u.create_time AS createTime, u.modify_time AS modifyTime, u.activated, u.avatar, u.birthday, u.email, u.mobile, u.nickname, u.sex, u.user_type AS userType,
+        u.username, u.worker_id AS workerId, u.user_code AS userCode,u.age,uc.bind_protocol AS bindProtocol FROM USER u
+        INNER JOIN
+        (
+        SELECT user_id,bind_protocol
+        FROM  user_company WHERE STATUS = 1 AND
+        company_id = #{hrId} AND user_id NOT IN (SELECT	IFNULL(u.id,'0') AS user_id FROM	task_worker t LEFT JOIN USER u ON t.worker_id = u.worker_id WHERE t.task_hr_id = #{taskId} AND t.status IN(0,1))
+        ) uc
+        ON u.id = uc.user_id
+        <where>
+        <if test="userName !=null and userName !=''"  >
+            and u.nickname like concat('%', #{userName},'%')
+        </if>
+        </where>
+    </select>
+    <select id="getSelectableWorkerH" resultType="com.microdev.model.User" parameterType="com.microdev.param.HrQueryWorkerDTO">
+        SELECT u.id AS pid, u.create_time AS createTime, u.modify_time AS modifyTime, u.activated, u.avatar, u.birthday, u.email, u.mobile, u.nickname, u.sex, u.user_type AS userType,
+        u.username, u.worker_id AS workerId, u.user_code AS userCode,u.age,uc.bind_protocol AS bindProtocol FROM USER u
+        INNER JOIN
+        (
+        SELECT user_id,bind_protocol
+        FROM  user_company WHERE STATUS = 1 AND
+        company_id = #{hotelId} AND user_id NOT IN (SELECT	IFNULL(u.id,'0') AS user_id FROM	task_worker t LEFT JOIN USER u ON t.worker_id = u.worker_id WHERE t.hotel_task_id = #{taskId} AND t.status IN(0,1))
+        ) uc
+        ON u.id = uc.user_id
+        <where>
+            <if test="userName !=null and userName !=''"  >
+                and u.nickname like concat('%', #{userName},'%')
+            </if>
+        </where>
+    </select>
+    <select id="getUnSelectableWorker" resultType="com.microdev.model.TaskWorker" parameterType="com.microdev.param.HrQueryWorkerDTO">
+        select <include refid="TaskWorker_Query_List"/> from task_worker where task_hr_id = #{taskId}
+    </select>
+    <insert id="save" parameterType="com.microdev.model.UserCompany">
+        insert into user_company values(#{pid},#{createTime},#{deleted},#{modifyTime},
+        #{allTasks},#{companyType},#{confirmedDate},#{confirmedTasks},#{noPromiseTasks},
+        #{refusedReason},#{refusedTasks},#{relieveTime},#{status},#{userType},
+        #{companyId},#{userId},#{bindProtocol})
+    </insert>
+    <update id="update" parameterType="com.microdev.model.UserCompany">
+        update user_company set deleted = #{deleted},modify_time = #{modifyTime},all_tasks = #{allTasks},company_type = #{companyType},
+        confirmed_date = #{confirmedDate},confirmed_tasks = #{confirmedTasks},no_promise_tasks = #{noPromiseTasks},refused_reason = #{refusedReason},
+        refused_tasks = #{refusedTasks},relieve_time = #{relieveTime},status = #{status},user_type = #{userType},company_id = #{companyId},
+        user_id = #{userId} where id = #{pid}
+    </update>
+
+    <select id="selectHrCompanyByUserId" resultType="com.microdev.param.WorkerBindCompany">
+        SELECT c.id as pid,uc.confirmedDate,uc.modify_time as modifyTime,uc.create_time,uc.status,c.name,c.logo,c.leader,c.leader_mobile,c.area,c.address,c.status AS companyStatus,uc.bind_protocol as bindProtocol, c.business_license as businessLicense, c.labor_dispatch_card as laborDispatchCard FROM company c
+        INNER JOIN
+        (
+    SELECT company_id,STATUS,create_time,relieve_time as confirmedDate,modify_time,bind_protocol FROM user_company  WHERE user_id = (SELECT id FROM USER WHERE worker_id = #{workerId})      AND STATUS IN  (1,3)) uc ON c.id = uc.company_id
+        <where>
+            <if test="name != null and name != ''">
+                c.name like concat('%', #{name},'%')
+            </if>
+            and c.company_type = #{type}
+        </where>
+    </select>
+
+    <insert id="saveBatch" parameterType="java.util.List">
+        insert into user_company (id, create_time,  modify_time,deleted, all_tasks, company_type, confirmed_date, confirmed_tasks, no_promise_tasks, refused_reason, refused_tasks, relieve_time, status, user_type, company_id, user_id,bind_protocol) values
+        <foreach collection="list" separator="," item="item">
+            (#{item.pid},#{item.createTime},#{item.modifyTime},#{item.deleted},#{item.allTasks},#{item.companyType},#{item.confirmedDate},#{item.confirmedTasks},#{item.noPromiseTasks},#{item.refusedReason},
+            #{item.refusedTasks},#{item.relieveTime},#{item.status},#{item.userType},#{item.companyId},#{item.userId},#{item.bindProtocol})
+        </foreach>
+    </insert>
+
+    <select id="selectWorkerBindCount" parameterType="java.lang.String" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM user_company WHERE user_id = #{userId} AND STATUS IN (1,3)
+    </select>
+
+    <select id="selectIsbind" resultType="java.lang.Integer">
+        SELECT count(1) FROM user_company WHERE  company_id = #{companyId} AND STATUS IN (0,1,3) AND user_id IN
+        <foreach collection="set" item="item" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <select id="selectIsBindUserId" resultType="java.lang.Integer">
+        SELECT count(1) FROM user_company WHERE user_id = #{userId} and status in (0,1,3) and company_id in <foreach collection="set" item="item" open="(" close=")" separator=",">
+        #{item}
+    </foreach>
+    </select>
+
+    <select id ="selectUserByHrId" resultType="java.util.Map">
+        SELECT u.`age`,u.mobile,u.nickname as username,u.`sex`,m.id AS messageId FROM USER u INNER JOIN
+      (SELECT id,worker_id,create_time FROM message WHERE STATUS = 0 AND hr_company_id = #{hrCompanyId}       AND  apply_type = 2 AND applicant_type = 1) m
+      ON u.worker_id = m.worker_id ORDER BY m.create_time DESC
+    </select>
+
+    <select id="selectHrBindCount" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM user_company WHERE company_id =#{companyId} AND STATUS IN (0,1,3)
+    </select>
+
+    <select id="selectByWorkerIdHrId" resultType="com.microdev.model.UserCompany">
+        SELECT <include refid="UserCompany_Query_List"/> FROM user_company WHERE company_id = #{companyId} AND user_id =(SELECT id FROM USER WHERE worker_id = #{workerId})
+    </select>
+
+    <select id="selectBindCountByWorkerId" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM user_company WHERE STATUS IN (1,3) AND user_id = (
+SELECT id FROM USER WHERE worker_id = #{workerId}
+)
+    </select>
+    <select id="selectAllWorker" resultType="com.microdev.model.UserCompany">
+        select c.* from user_company c left join user u on c.user_id = u.id
+       <where>
+           <if test="status !=null and status !=''"  >
+               and c.status = #{status}
+           </if>
+           <if test="status == null"  >
+               and c.status in (1,3)
+           </if>
+           <if test="hrId !=null and hrId !=''"  >
+               and c.company_id = #{hrId}
+           </if>
+           <if test="hotelId !=null and hotelId !=''"  >
+               and c.company_id = #{hotelId}
+           </if>
+           <if test="userName !=null and userName !=''"  >
+               and nickname like concat('%', #{userName},'%')
+           </if>
+       </where>
+
+    </select>
+
+    <select id = "selectHrBindWorker" resultType="com.microdev.param.WorkerCooperate" parameterType="com.microdev.param.HrQueryWorkerDTO">
+        SELECT CASE uc.`status` WHEN 0 THEN '未审核' WHEN 1 THEN '已绑定' WHEN 2 THEN '拒绝绑定' WHEN 3 THEN '解绑中' WHEN 4 THEN '已解绑' END AS STATUS,
+u.`nickname` AS NAME, CASE u.sex WHEN 'UNKNOW' THEN '未知' WHEN 'MALE' THEN '男' WHEN 'FEMALE' THEN '女' END AS sex, u.mobile, u.`avatar` AS logo,
+DATE_FORMAT(u.`create_time`, '%Y-%m-%d %H:%i:%s') AS createTime FROM user_company uc INNER JOIN USER u
+ON u.id = uc.`user_id` WHERE  uc.status IN (1,3)
+        <if test="hrId !=null and hrId !=''"  >
+            and uc.`company_id` = #{hrId}
+        </if>
+        <if test="hotelId !=null and hotelId !=''"  >
+            and uc.`company_id` = #{hotelId}
+        </if>
+        <if test="userName !=null and userName !=''"  >
+            and nickname like concat('%', #{userName},'%')
+        </if>
+    </select>
+
+</mapper>

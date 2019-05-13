@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.microdev.mapper.TaskTypeRelationMapper" >
+    <sql id="TaskTypeRelation_Column_List" >
+        id as pid, create_time, deleted, modify_time, code, name
+    </sql>
+    <insert id = "insertTaskTypeRelation">
+        insert into task_type_relation values(#{id},#{taskTypeId},#{idType})
+    </insert>
+    <insert id="insertTaskTypeRelationBatch" parameterType="java.util.List">
+        insert into task_type_relation (id, task_type_id, id_type) values
+        <foreach collection="list" separator="," item="item">
+            (#{item.id},#{item.taskTypeId},#{item.idType})
+        </foreach>
+    </insert>
+    <delete id="deleteTaskTypeRelation">
+        delete from task_type_relation where id = #{id}
+    </delete>
+
+</mapper>
