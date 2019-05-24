@@ -16,8 +16,8 @@ spring:
         min-idle: 5
     datasource:
         name: test
-        url: jdbc:mysql://microworker.mysql.rds.aliyuncs.com:3306/microworkeronline?useUnicode=true&amp;charaterEncoding=utf-8&allowMultiQueries=true&zeroDateTimeBehavior=convertToNull&&useSSL=false
-        username: ytydb
+        url: jdbc:mysql://rm-uf6p52srk68h3d93qjo.mysql.rds.aliyuncs.com:3306/microworkeronline?useUnicode=true&amp;charaterEncoding=utf-8&allowMultiQueries=true&zeroDateTimeBehavior=convertToNull&&useSSL=false
+        username: yty
         password: Yituiyun2018
         type: com.alibaba.druid.pool.DruidDataSource
         driver-class-name: com.mysql.jdbc.Driver
