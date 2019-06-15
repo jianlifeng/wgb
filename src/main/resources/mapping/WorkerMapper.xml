@@ -73,7 +73,7 @@
                 u.nickname like concat('%', #{name},'%')
             </if>
             <if test="status !=null and status !=999 ">
-                and u.status = #{status}
+                and w.status = #{status}
             </if>
             <if test="pollCode !=null and pollCode !=''">
                 and w.poll_code like concat('%', #{pollCode},'%')
