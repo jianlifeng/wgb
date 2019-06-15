@@ -72,7 +72,7 @@
             <if test="name !=null and name !=''">
                 u.nickname like concat('%', #{name},'%')
             </if>
-            <if test="status !=null and status !=''">
+            <if test="status !=null and status !=999 ">
                 and u.status = #{status}
             </if>
             <if test="pollCode !=null and pollCode !=''">
