@@ -224,12 +224,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
                     pa.setHotel (0);
                     pa.setWorker (1);
                     pa.setTotal (1);
-                    try{
-                        pa.setLeader (register.getTgCode ().substring (0,4));
-                    }catch(Exception e){
-                        e.printStackTrace ();
-                        return ResultDO.buildError ("邀请码无效");
-                    }
+                    pa.setLeader (register.getTgCode ());
                     propagandaMapper.insert (pa);
                 }else{
                     pa.setTotal (pa.getTotal ()+1);
@@ -266,12 +261,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
                     pa.setHotel (1);
                     pa.setWorker (0);
                     pa.setTotal (1);
-                    try{
-                        pa.setLeader (register.getTgCode ().substring (0,4));
-                    }catch(Exception e){
-                        e.printStackTrace ();
-                        return ResultDO.buildError ("邀请码无效");
-                    }
+                    pa.setLeader (register.getTgCode ());
                     propagandaMapper.insert (pa);
                 }else{
                     pa.setTotal (pa.getTotal ()+1);
@@ -307,12 +297,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
                     pa.setHotel (0);
                     pa.setWorker (0);
                     pa.setTotal (1);
-                    try{
-                        pa.setLeader (register.getTgCode ().substring (0,4));
-                    }catch(Exception e){
-                        e.printStackTrace ();
-                        return ResultDO.buildError ("邀请码无效");
-                    }
+                    pa.setLeader (register.getTgCode ());
                     propagandaMapper.insert (pa);
                 }else{
                     pa.setTotal (pa.getTotal ()+1);

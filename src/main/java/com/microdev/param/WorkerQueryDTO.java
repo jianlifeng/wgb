@@ -8,4 +8,5 @@ public class WorkerQueryDTO {
     private String name;
     private String pollCode;
     private String hotelId;
+    private Integer status;
 }
