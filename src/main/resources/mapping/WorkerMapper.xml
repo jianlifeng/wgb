@@ -76,9 +76,10 @@
                 and w.status = #{status}
             </if>
             <if test="pollCode !=null and pollCode !=''">
-                w.poll_code like concat('%', #{pollCode},'%')
+                and w.poll_code like concat('%', #{pollCode},'%')
             </if>
         </where>
+        order by u.create_time desc
     </select>
     <select  id = "selectAllCount" resultType="java.lang.Integer">
         select count(1) from worker
