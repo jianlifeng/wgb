@@ -16,7 +16,7 @@
         <if test="companyType != null and companyType != ''">
             and company_type = #{companyType}
         </if>
-        <if test="status != null and status != ''">
+        <if test="status != null and status != 999">
             and status = #{status}
         </if>
         <if test="pollCode != null and pollCode != ''">
