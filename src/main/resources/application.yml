@@ -16,7 +16,7 @@ spring:
         min-idle: 5
     datasource:
         name: test
-        url: jdbc:mysql://rm-uf6p52srk68h3d93qjo.mysql.rds.aliyuncs.com:3306/microworkeronline?useUnicode=true&amp;charaterEncoding=utf-8&allowMultiQueries=true&zeroDateTimeBehavior=convertToNull&&useSSL=false
+        url: jdbc:mysql://rm-uf6p52srk68h3d93qjo.mysql.rds.aliyuncs.com:3306/microworkertest?useUnicode=true&amp;charaterEncoding=utf-8&allowMultiQueries=true&zeroDateTimeBehavior=convertToNull&&useSSL=false
         username: yty
         password: Yituiyun2018
         type: com.alibaba.druid.pool.DruidDataSource
@@ -34,6 +34,16 @@ spring:
         testOnReturn: false
         poolPreparedStatements: true
         maxOpenPreparedStatements: 20
+    thymeleaf:
+      prefix: classpath:/templates/
+      check-template-location: true
+      suffix: .html
+      encoding: utf-8
+      servlet:
+        content-type: text/html
+      mode: HTML5
+      cache: false
+
 #mybatis
 mybatis-plus:
   mapper-locations: classpath:mapping/*.xml

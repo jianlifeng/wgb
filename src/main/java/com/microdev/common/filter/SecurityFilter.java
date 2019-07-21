@@ -60,6 +60,7 @@ public class SecurityFilter implements Filter {
                     break;
                 }
             }
+            //hasPermission = true;
             //没有被忽略的需要登录之后使用 token 访问
             if (!hasPermission) {
                 String accessToken = TokenUtil.parseBearerToken(request);

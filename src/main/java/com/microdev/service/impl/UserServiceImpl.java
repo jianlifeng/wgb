@@ -22,7 +22,6 @@ import com.microdev.type.PlatformType;
 import com.microdev.type.SocialType;
 import com.microdev.type.UserSex;
 import com.microdev.type.UserType;
-import io.swagger.client.model.NewPassword;
 import io.swagger.client.model.RegisterUsers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -35,8 +34,10 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
 
 @Transactional
 @Service
@@ -330,6 +331,160 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
         iMUserService.createNewIMUserSingle(users);
         return ResultDO.buildSuccess (token);
     }
+
+    @Override
+    public ResultDO adminRegister(UserDTO register) throws Exception{
+        ResultDO result = null;
+        if (register.getUserType() == UserType.platform) {
+            return ResultDO.buildError ("无权限注册该用户");
+        }
+        if (userMapper.findByMobile(register.getMobile()) != null) {
+            return ResultDO.buildError ("手机号码已经存在");
+        }
+        File file;
+        String fileURI = null;
+        String filePath;
+
+        User newUser = new User();
+        newUser.setUserType(register.getUserType());
+        newUser.setMobile(register.getMobile());
+        newUser.setNickname (register.getMobile());
+        newUser.setUserCode(register.getUserType()
+                .toString());
+        newUser.setSex (UserSex.UNKNOW);
+        if (StringUtils.hasText(register.getPassword())) {
+            newUser.setPassword(PasswordHash.createHash(register.getPassword()));
+        }
+        newUser.setUsername(newUser.getMobile());
+        if(newUser.getUserType().name().equals("worker")){
+            Worker worker = new Worker();
+            workerMapper.insert(worker);
+            file = QRCodeUtil.createQRCode (worker.getPid ()+"WGB"+register.getUserType());
+            filePath = "QRCode".toLowerCase() + "/" + FileUtil.fileNameReplaceSHA1(file);
+            //文件上传成功后返回的下载路径，比如: http://oss.xxx.com/avatar/3593964c85fd76f12971c82a411ef2a481c9c711.jpg
+            fileURI = objectStoreService.uploadFile(filePath, file);
+            worker.setStatus (0);
+            worker.setQrCode (fileURI);
+            worker.setBindCompanys (true);
+            worker.setActiveCompanys (0);
+            worker.setHandheldIdentity (register.getHandheldIdentity ());
+            worker.setStature (register.getStature ());
+            worker.setWeight (register.getWeight ());
+            worker.setEducation (register.getEducation ());
+            if(register.getTgCode ()!=null && !register.getTgCode ().equals ("")){
+                worker.setPollCode (register.getTgCode ());
+                Propaganda pa = propagandaMapper.selectById (register.getTgCode ());
+                if(pa == null){
+                    pa = new Propaganda ();
+                    pa.setId (register.getTgCode ());
+                    pa.setHr (0);
+                    pa.setHotel (0);
+                    pa.setWorker (1);
+                    pa.setTotal (1);
+                    pa.setLeader (register.getTgCode ());
+                    propagandaMapper.insert (pa);
+                }else{
+                    pa.setTotal (pa.getTotal ()+1);
+                    pa.setWorker (pa.getWorker ()+1);
+                    propagandaMapper.updateById (pa);
+                }
+            }
+            workerMapper.updateById (worker);
+            newUser.setWorkerId(worker.getPid());
+            result = ResultDO.buildSuccess(worker);
+        } else if(newUser.getUserType().name().equals("hotel")){
+            Company company = new Company();
+            company.setStatus(0);
+            company.setLeader (newUser.getNickname ());
+            company.setLeaderMobile(register.getMobile());
+            company.setName ("wgb"+UUID.randomUUID ().toString ().toLowerCase ().substring (1,7));
+            company.setCompanyType(1);
+            company.setBindWorkers (true);
+            company.setBindCompanys (true);
+            company.setActiveWorkers (0);
+            company.setActiveCompanys (0);
+            companyMapper.insert(company);
+            file = QRCodeUtil.createQRCode (company.getPid ()+"WGB"+register.getUserType());
+            filePath = "QRCode".toLowerCase() + "/" + FileUtil.fileNameReplaceSHA1(file);
+            //文件上传成功后返回的下载路径，比如: http://oss.xxx.com/avatar/3593964c85fd76f12971c82a411ef2a481c9c711.jpg
+            fileURI = objectStoreService.uploadFile(filePath, file);
+            company.setQrCode (fileURI);
+            if(register.getTgCode ()!=null && !register.getTgCode ().equals ("")){
+                company.setPollCode (register.getTgCode ());
+                Propaganda pa = propagandaMapper.selectById (register.getTgCode ());
+                if(pa == null){
+                    pa = new Propaganda ();
+                    pa.setId (register.getTgCode ());
+                    pa.setHr (0);
+                    pa.setHotel (1);
+                    pa.setWorker (0);
+                    pa.setTotal (1);
+                    pa.setLeader (register.getTgCode ());
+                    propagandaMapper.insert (pa);
+                }else{
+                    pa.setTotal (pa.getTotal ()+1);
+                    pa.setHotel (pa.getHotel ()+1);
+                    propagandaMapper.updateById (pa);
+                }
+            }
+            companyMapper.updateById (company);
+            result = ResultDO.buildSuccess(company);
+        }else if(newUser.getUserType().name().equals("hr")){
+            Company company = new Company();
+            company.setStatus(0);
+            company.setLeaderMobile(register.getMobile());
+            company.setLeader (newUser.getNickname ());
+            company.setCompanyType(2);
+            company.setName ("wgb"+UUID.randomUUID ().toString ().toLowerCase ().substring (1,7));
+            company.setBindWorkers (true);
+            company.setBindCompanys (true);
+            company.setActiveWorkers (0);
+            company.setActiveCompanys (0);
+            companyMapper.insert(company);
+            file = QRCodeUtil.createQRCode (company.getPid ()+"WGB"+register.getUserType());
+            filePath = "QRCode".toLowerCase() + "/" + FileUtil.fileNameReplaceSHA1(file);
+            //文件上传成功后返回的下载路径，比如: http://oss.xxx.com/avatar/3593964c85fd76f12971c82a411ef2a481c9c711.jpg
+            fileURI = objectStoreService.uploadFile(filePath, file);
+            company.setQrCode (fileURI);
+            if(register.getTgCode ()!=null && !register.getTgCode ().equals ("")){
+                company.setPollCode (register.getTgCode ());
+                Propaganda pa = propagandaMapper.selectById (register.getTgCode ());
+                if(pa == null){
+                    pa = new Propaganda ();
+                    pa.setId (register.getTgCode ());
+                    pa.setHr (1);
+                    pa.setHotel (0);
+                    pa.setWorker (0);
+                    pa.setTotal (1);
+                    pa.setLeader (register.getTgCode ());
+                    propagandaMapper.insert (pa);
+                }else{
+                    pa.setTotal (pa.getTotal ()+1);
+                    pa.setHr (pa.getHr ()+1);
+                    propagandaMapper.updateById (pa);
+                }
+            }
+            companyMapper.updateById (company);
+            result = ResultDO.buildSuccess(company);
+        }
+        //存入用户
+        userMapper.insert(newUser);
+        //存入用户角色关系
+        roleMapper.insertRoleAndUserRelation(newUser
+                .getPid(),newUser.getUserCode());
+        List<Role> roleList = roleMapper.queryAllRolesByUserId(newUser.getPid());
+        UserDTO userDTO = new UserDTO();
+        userDTO.setId(newUser.getPid());
+        userDTO.setMobile(newUser.getMobile());
+        userDTO.setUsername(newUser.getUsername());
+        userDTO.setUserType(newUser.getUserType());
+        userDTO.setRoleList(roleList);
+        ValueOperations<String, String> operations = redisTemplate.opsForValue();
+        operations.set(register.getMobile (), register.getUniqueId ());
+        TokenDTO token = tokenService.accessToken(userDTO, register.getPlatform().name());
+        return result;
+    }
+
     /**
      * 注销登录
      */
@@ -492,7 +647,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
 
         }
         com.microdev.common.context.User loginUser = ServiceContextHolder.getServiceContext().getUser();
-        User user = userMapper.queryByUserId(loginUser.getId());
+        User user = null;
+        if(userDTO.getTgCode().contains("adminregister")){
+            user = userMapper.queryByUserId(userDTO.getId());
+        }else{
+            user = userMapper.queryByUserId(loginUser.getId());
+        }
 
         try {
             userConverter.update(userDTO, user);

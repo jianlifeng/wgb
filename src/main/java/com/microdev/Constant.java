@@ -27,6 +27,10 @@ public interface Constant {
 
     //一些不用add("/reset-pwd");add("/reset-pwd");拦截的 url
     Set<String> ignoreUrl = new HashSet<String>() {{
+        //管理员接口
+        add("/admin/*");
+        add("/js/*");
+        add("/resources/*");
         //静态资源
         add("/favicon.ico");
         add("/login");//登录

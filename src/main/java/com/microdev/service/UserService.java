@@ -22,6 +22,9 @@ public interface UserService extends IService<User>{
 
        //用户注册
        ResultDO register(UserDTO userDTO) throws Exception;
+
+       ResultDO adminRegister(UserDTO userDTO) throws Exception;
+
        /**
         * 退出登录
         */

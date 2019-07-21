@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>springboot-thymeleaf demo</title>
+</head>
+
+<body>
+<script type="text/javascript" src="../js/jquery-1.4.2.min.js"></script>
+<p th:text="'结果, ' + ${message} + '!'"/>
+<form action=/admin/register method="post" onsubmit="return checkForm()">
+    <a>用户名：</a>
+    <input type="text" name="username" property="用户名"/>
+    <a>年龄：</a>
+    <input type="text" name="age" property="年龄"/>
+    <a>性别：</a>
+    <select name="sex">
+        <option value="男">男</option>
+        <option value="女">女</option>
+        <option value="位置" selected>未知</option>
+    </select>
+    <a>昵称：</a>
+    <input type="text" name="nickname" property="昵称"/>
+    <a>电话：</a>
+    <input type="text" name="mobile" property="电话"/>
+    <a>邮箱：</a>
+    <input type="text" name="email" property="邮箱"/>
+    <a>用户类型：</a>
+    <select name="userType" id="userSelect">
+        <option value="2" selected>用人单位</option>
+        <option value="3">人力资源公司</option>
+        <option value="1">小时工</option>
+    </select>
+    <input type="submit"/>
+    <div id="company">
+        <a>公司名称：</a>
+        <input type="text" name="companyName" property="公司名称"/>
+        <a>公司地址：</a>
+        <input type="text" name="address" property="公司地址"/>
+        <a>区域：</a>
+        <input type="text" name="area" property="区域"/>
+        <a>区域码：</a>
+        <input type="text" name="addressCode" property="区域码"/>
+    </div>
+    <div id="worker" style="display:none">
+        <a>身高：</a>
+        <input type="text" name="stature" property="身高"/>
+        <a>体重：</a>
+        <input type="text" name="weight" property="体重"/>
+        <a>教育背景：</a>
+        <select name="education">
+            <option value=0>小学及以下</option>
+            <option value=1>初中</option>
+            <option value=2 selected>高中</option>
+            <option value=3 >本科</option>
+            <option value=4 >硕士及以上</option>
+        </select>
+    </div>
+</form>
+</body>
+<script>
+    $("#userSelect").bind("change", function(){
+        var value = $("#userSelect option:selected").val();
+        if(value == "1"){
+            $("#worker").show();
+            $("#company").hide();
+        }
+        if(value != "1"){
+            $("#worker").hide();
+            $("#company").show();
+        }
+    });
+    function checkForm(){
+       if($("input[name='mobile']").val() == null || $("input[name='mobile']").val() == ""){
+           alert("手机号不能为空");
+           return false;
+       }
+       var pattern = /^1[34578]\d{9}$/;
+       if(!pattern.test($("input[name='mobile']").val())){
+           alert("手机号格式不正确");
+           return false;
+       }
+       return true;
+    }
+</script>
+</html>
