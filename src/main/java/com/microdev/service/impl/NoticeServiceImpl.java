@@ -398,11 +398,13 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper,Notice> implemen
             }
             return enrollService.hrApplyRegistration (request);
         } else if (notice.getType ( ) == 2 || notice.getType ( ) == 0) {
-            if(notice.getFromDate ().isBefore (OffsetDateTime.now ())){
-                return ResultDO.buildError ("任务已开始，无法报名");
-            }
-            if(notice.getToDate ().isBefore (OffsetDateTime.now ())){
-                return ResultDO.buildError ("招聘已结束，无法报名");
+            if(notice.getType ( ) == 2){
+                if(notice.getFromDate ().isBefore (OffsetDateTime.now ())){
+                    return ResultDO.buildError ("任务已开始，无法报名");
+                }
+                if(notice.getToDate ().isBefore (OffsetDateTime.now ())){
+                    return ResultDO.buildError ("招聘已结束，无法报名");
+                }
             }
             Map<String,Object> map = new HashMap();
             map.put ("hotel_task_id",notice.getTaskId ());
@@ -426,8 +428,10 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper,Notice> implemen
             return enrollService.workerApplyHr (request);
         } else {
             request.setHrCompanyId (notice.getHrCompanyId ());
-            if(notice.getToDate ().isBefore (OffsetDateTime.now ())){
-                return ResultDO.buildError ("招聘已结束，无法报名");
+            if(notice.getType ( ) == 4){
+                if(notice.getToDate ().isBefore (OffsetDateTime.now ())){
+                    return ResultDO.buildError ("招聘已结束，无法报名");
+                }
             }
             return enrollService.workerApplyRegistration (request);
         }
