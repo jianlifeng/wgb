@@ -30,6 +30,8 @@ public interface Constant {
         //管理员接口
         add("/admin/*");
         add("/js/*");
+        add("/css/*");
+        add("/img/*");
         add("/resources/*");
         //静态资源
         add("/favicon.ico");

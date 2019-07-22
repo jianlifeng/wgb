@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8">
+    <meta name="Description" content="" />
+    <meta name="Keywords" content="" />
+    <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <!-- 删除苹果默认的工具栏和菜单栏 -->
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <!-- 设置苹果工具栏颜色 -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+    <!-- 忽略页面中的数字识别为电话 -->
+    <meta name="format-detection" content="telephone=no"/>
+    <title>微工宝</title>
+    <script>
+        document.getElementById("viewport").content='width=750,user-scalable=no';
+    </script>
+    <link href="../css/style.css?v=2" rel="stylesheet" type="text/css">
+</head>
+<body>
+    <div class="page">
+        <div class="btn_ios"></div>
+        <div class="btn_and"></div>
+    </div>
+    <div id="landscape">
+        <!--横屏遮罩-->
+        <div id="orientLayer" class="mod-orient-layer">
+            <div class="mod-orient-layer__content"><i class="icon mod-orient-layer__icon-orient"></i>
+                <div class="mod-orient-layer__desc">为了更好的体验，请使用竖屏锁屏浏览</div>
+            </div>
+        </div>
+    </div>
+    <script src="../js/jquery-1.11.2.min.js"></script>
+    <script src="../js/loading.js?v=2"></script>
+    <script src="../js/main.js?v=3"></script>
+</body>
+</html>

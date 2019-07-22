@@ -33,7 +33,7 @@ public class AdminController {
     private ObjectStoreService objectStoreService;
 
     @RequestMapping("/admin/register")
-    public String hello(HttpServletRequest request, @RequestParam(required = false,value = "message") String message, @RequestParam(required = false, value = "username") String username,
+    public String register(HttpServletRequest request, @RequestParam(required = false,value = "message") String message, @RequestParam(required = false, value = "username") String username,
                         @RequestParam(required = false,value = "tgCode",defaultValue ="adminregister") String tgCode, @RequestParam(required = false, value ="age") Integer age, @RequestParam(required =
             false, value = "nickname") String nickname, @RequestParam(required = false, value ="sex") String sex, @RequestParam(required = false, value = "mobile") String mobile
             , @RequestParam(required = false, value ="email") String email,@RequestParam(required = false,value = "areaCode") Integer areaCode, @RequestParam(required = false, value =
@@ -87,6 +87,11 @@ public class AdminController {
             request.setAttribute("message", "注册成功");
         }
         return "register";
+    }
+
+    @RequestMapping("/admin/index")
+    public String index(HttpServletRequest request) {
+        return "index";
     }
 
     public String uploadFile(MultipartFile file){
