@@ -8,33 +8,37 @@
 <body>
 <script type="text/javascript" src="../js/jquery-1.4.2.min.js"></script>
 <p th:text="'结果, ' + ${message} + '!'"/>
-<form action=/admin/register method="post" onsubmit="return checkForm()">
+<form action=/admin/register enctype="multipart/form-data" method="post" onsubmit="return checkForm()">
     <a>用户名：</a>
     <input type="text" name="username" property="用户名"/>
     <a>年龄：</a>
     <input type="text" name="age" property="年龄"/>
     <a>性别：</a>
     <select name="sex">
-        <option value="男">男</option>
-        <option value="女">女</option>
-        <option value="位置" selected>未知</option>
+        <option value="MALE">男</option>
+        <option value="FEMALE">女</option>
+        <option value="UNKNOW" selected>未知</option>
     </select>
     <a>昵称：</a>
     <input type="text" name="nickname" property="昵称"/>
+    <a>头像：</a>
+    <input type="file" name="avatar" property="头像"/>
     <a>电话：</a>
     <input type="text" name="mobile" property="电话"/>
     <a>邮箱：</a>
     <input type="text" name="email" property="邮箱"/>
     <a>用户类型：</a>
     <select name="userType" id="userSelect">
-        <option value="2" selected>用人单位</option>
-        <option value="3">人力资源公司</option>
-        <option value="1">小时工</option>
+        <option value="hotel" selected>用人单位</option>
+        <option value="hr">人力资源公司</option>
+        <option value="worker">小时工</option>
     </select>
     <input type="submit"/>
     <div id="company">
         <a>公司名称：</a>
         <input type="text" name="companyName" property="公司名称"/>
+        <a>公司logo：</a>
+        <input type="file" name="logo" property="公司logo"/>
         <a>公司地址：</a>
         <input type="text" name="address" property="公司地址"/>
         <a>区域：</a>
@@ -61,11 +65,11 @@
 <script>
     $("#userSelect").bind("change", function(){
         var value = $("#userSelect option:selected").val();
-        if(value == "1"){
+        if(value == "worker"){
             $("#worker").show();
             $("#company").hide();
         }
-        if(value != "1"){
+        if(value != "worker"){
             $("#worker").hide();
             $("#company").show();
         }

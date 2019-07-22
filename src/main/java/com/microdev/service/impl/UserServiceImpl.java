@@ -336,10 +336,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
     public ResultDO adminRegister(UserDTO register) throws Exception{
         ResultDO result = null;
         if (register.getUserType() == UserType.platform) {
-            return ResultDO.buildError ("无权限注册该用户");
+            throw new Exception("无权限注册该用户");
         }
         if (userMapper.findByMobile(register.getMobile()) != null) {
-            return ResultDO.buildError ("手机号码已经存在");
+            throw new Exception("手机号码已经存在");
         }
         File file;
         String fileURI = null;
@@ -348,14 +348,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
         User newUser = new User();
         newUser.setUserType(register.getUserType());
         newUser.setMobile(register.getMobile());
-        newUser.setNickname (register.getMobile());
+        newUser.setNickname (register.getNickname());
         newUser.setUserCode(register.getUserType()
                 .toString());
-        newUser.setSex (UserSex.UNKNOW);
+        newUser.setSex (register.getSex());
+        newUser.setAvatar(register.getAvatar());
         if (StringUtils.hasText(register.getPassword())) {
             newUser.setPassword(PasswordHash.createHash(register.getPassword()));
         }
-        newUser.setUsername(newUser.getMobile());
+        newUser.setUsername(register.getUsername());
         if(newUser.getUserType().name().equals("worker")){
             Worker worker = new Worker();
             workerMapper.insert(worker);
@@ -481,7 +482,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
         userDTO.setRoleList(roleList);
         ValueOperations<String, String> operations = redisTemplate.opsForValue();
         operations.set(register.getMobile (), register.getUniqueId ());
-        TokenDTO token = tokenService.accessToken(userDTO, register.getPlatform().name());
+        //TokenDTO token = tokenService.accessToken(userDTO, register.getPlatform().name());
         return result;
     }
 
@@ -649,7 +650,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
         com.microdev.common.context.User loginUser = ServiceContextHolder.getServiceContext().getUser();
         User user = null;
         if(userDTO.getTgCode().contains("adminregister")){
-            user = userMapper.queryByUserId(userDTO.getId());
+            user = userMapper.queryByWorkerId(userDTO.getId());
         }else{
             user = userMapper.queryByUserId(loginUser.getId());
         }
