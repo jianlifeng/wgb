@@ -649,7 +649,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
         }
         com.microdev.common.context.User loginUser = ServiceContextHolder.getServiceContext().getUser();
         User user = null;
-        if(userDTO.getTgCode().contains("adminregister")){
+        if(userDTO.getTgCode() != null && (userDTO.getTgCode().contains("adminregister") || userDTO.getTgCode().contains("000001"))){
             user = userMapper.queryByWorkerId(userDTO.getId());
         }else{
             user = userMapper.queryByUserId(loginUser.getId());

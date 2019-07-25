@@ -34,7 +34,7 @@ public class AdminController {
 
     @RequestMapping("/admin/register")
     public String register(HttpServletRequest request, @RequestParam(required = false,value = "message") String message, @RequestParam(required = false, value = "username") String username,
-                        @RequestParam(required = false,value = "tgCode",defaultValue ="adminregister") String tgCode, @RequestParam(required = false, value ="age") Integer age, @RequestParam(required =
+                        @RequestParam(required = false,value = "tgCode",defaultValue ="000001") String tgCode, @RequestParam(required = false, value ="age") Integer age, @RequestParam(required =
             false, value = "nickname") String nickname, @RequestParam(required = false, value ="sex") String sex, @RequestParam(required = false, value = "mobile") String mobile
             , @RequestParam(required = false, value ="email") String email,@RequestParam(required = false,value = "areaCode") Integer areaCode, @RequestParam(required = false, value =
             "userType") String userType, @RequestParam(required = false,value = "companyName") String companyName, @RequestParam(required = false, value ="address") String address,@RequestParam(required = false,
