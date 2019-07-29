@@ -1,5 +1,6 @@
 package com.microdev.Controller;
 
+import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.microdev.Constant;
 import com.microdev.common.PagingDO;
 import com.microdev.common.ResultDO;
@@ -66,6 +67,8 @@ public class UserController {
     TaskHrCompanyMapper taskHrCompanyMapper;
 	@Autowired
     CompanyMapper companyMapper;
+	@Autowired
+    RelationAccountMapper relationAccountMapper;
 	/**
      * 创建用户
      */
@@ -499,6 +502,28 @@ public class UserController {
     @GetMapping("/check/version")
     public ResultDO checkVersion() throws Exception{
         return ResultDO.buildSuccess (versionMapper.selectVersion ());
+    }
+
+    /**
+     * 获取切换账号数据
+     */
+    @GetMapping("/relation/account/{key}")
+    public ResultDO relationAccount(@PathVariable String key) throws Exception{
+        List<RelationAccount> list = relationAccountMapper.selectList(new EntityWrapper<RelationAccount>().eq("mobile_key",key).orderBy("modify_time",false));
+        User user = null;
+        Company company = null;
+        for (RelationAccount ls:list) {
+            if(ls.getUserType().equals(UserType.worker)){
+                user = userMapper.selectById(ls.getUserId());
+                ls.setName(user.getNickname());
+                ls.setLogo(user.getAvatar());
+            }else{
+                company = companyMapper.findFirstByLeaderMobile(ls.getMobile());
+                ls.setName(company.getName());
+                ls.setLogo(company.getLogo());
+            }
+        }
+        return ResultDO.buildSuccess (list);
     }
 
 }

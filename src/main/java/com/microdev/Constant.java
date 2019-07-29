@@ -89,6 +89,8 @@ public interface Constant {
         add("/hotel/info/download");
         add("/hotel/download/worker/pay");
         add("/hotel/pay/worker/account");
+        add("/relation/account/*");
+        add("/test/*");
     }};
 
 

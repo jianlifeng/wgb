@@ -2,6 +2,7 @@ package com.microdev.service.impl;
 
 import cn.jiguang.common.resp.APIConnectionException;
 import cn.jiguang.common.resp.APIRequestException;
+import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.baomidou.mybatisplus.service.impl.ServiceImpl;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
@@ -78,6 +79,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
     private IMUserService iMUserService;
     @Autowired
     private IMOperateService iMOperateService;
+    @Autowired
+    private RelationAccountMapper relationAccountMapper;
 
     @Override
     public User create(User user) throws Exception{
@@ -139,7 +142,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
         if(user == null){
             return ResultDO.buildError ("用户不存在");
         }
-
         UserDTO userDTO = new UserDTO();
         if(login.getPlatform () == PlatformType.PC){
             if(user.getUserType () == UserType.worker){
@@ -170,6 +172,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
 
         if (user != null && PasswordHash.validatePassword(login.getPassword(), user.getPassword())) {
             operations.set(user.getMobile (), login.getUniqueId ());
+            //录入关联账号
+            RelationAccount relationAccount = new RelationAccount();
+            List<RelationAccount> list = relationAccountMapper.selectList(new EntityWrapper<RelationAccount>().eq("mobile",login.getMobile()).eq("mobile_key",login.getUniqueId()));
+            if(list!=null && list.size()>0){
+                relationAccount = list.get(0);
+                relationAccountMapper.updateById(relationAccount);
+            }else{
+                relationAccount.setMobile(login.getMobile());
+                relationAccount.setMobileKey(login.getUniqueId());
+                relationAccount.setUserId(user.getPid());
+                relationAccount.setUserType(user.getUserType());
+                relationAccountMapper.insert(relationAccount);
+            }
             return ResultDO.buildSuccess (tokenService.accessToken(userDTO, login.getPlatform().name()));
         }
         return ResultDO.buildError ("用户不存在");
@@ -323,7 +338,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
         ValueOperations<String, String> operations = redisTemplate.opsForValue();
         operations.set(register.getMobile (), register.getUniqueId ());
         TokenDTO token = tokenService.accessToken(userDTO, register.getPlatform().name());
-
+        //录入关联账号
+        RelationAccount relationAccount = new RelationAccount();
+        relationAccount.setMobile(userDTO.getMobile());
+        relationAccount.setMobileKey(userDTO.getUniqueId());
+        relationAccount.setUserId(newUser.getPid());
+        relationAccount.setUserType(newUser.getUserType());
+        relationAccountMapper.insert(relationAccount);
         //注册IM用户
         io.swagger.client.model.User user = new io.swagger.client.model.User().username(newUser.getPid()).password(newUser.getPid());
         RegisterUsers users = new RegisterUsers();
