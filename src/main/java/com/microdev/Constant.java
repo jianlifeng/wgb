@@ -90,7 +90,7 @@ public interface Constant {
         add("/hotel/download/worker/pay");
         add("/hotel/pay/worker/account");
         add("/relation/account/*");
-        add("/test/*");
+        add("/delete/relation/*");
     }};
 
 

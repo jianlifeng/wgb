@@ -526,4 +526,13 @@ public class UserController {
         return ResultDO.buildSuccess (list);
     }
 
+    /**
+     * 获取切换账号数据
+     */
+    @GetMapping("/delete/relation/{pid}")
+    public ResultDO relationDelete(@PathVariable String pid) throws Exception{
+        relationAccountMapper.deleteById(pid);
+        return ResultDO.buildSuccess ("删除成功");
+    }
+
 }
