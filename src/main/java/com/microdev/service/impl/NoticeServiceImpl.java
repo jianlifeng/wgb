@@ -386,9 +386,10 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper,Notice> implemen
             throw new ParamsException ("参数错误");
         }
         if (notice.getType ( ) == 1) {
-            if(notice.getFromDate ().isBefore (OffsetDateTime.now ())){
+            //暂时去除报名限制
+            /*if(notice.getFromDate ().isBefore (OffsetDateTime.now ())){
                 return ResultDO.buildError ("任务已开始，无法报名");
-            }
+            }*/
             Map<String,Object> map = new HashMap();
             map.put ("task_id",notice.getTaskId ());
             map.put ("hr_company_id",request.getHrCompanyId ());
@@ -399,9 +400,10 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper,Notice> implemen
             return enrollService.hrApplyRegistration (request);
         } else if (notice.getType ( ) == 2 || notice.getType ( ) == 0) {
             if(notice.getType ( ) == 2){
-                if(notice.getFromDate ().isBefore (OffsetDateTime.now ())){
+                //暂时去除报名限制
+                /*if(notice.getFromDate ().isBefore (OffsetDateTime.now ())){
                     return ResultDO.buildError ("任务已开始，无法报名");
-                }
+                }*/
                 if(notice.getToDate ().isBefore (OffsetDateTime.now ())){
                     return ResultDO.buildError ("招聘已结束，无法报名");
                 }
@@ -415,9 +417,10 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper,Notice> implemen
             }
             return enrollService.workerApplyHotel (request);
         } else if (notice.getType ( ) == 3) {
-            if(notice.getFromDate ().isBefore (OffsetDateTime.now ())){
+            //暂时去除报名限制
+            /*if(notice.getFromDate ().isBefore (OffsetDateTime.now ())){
                 return ResultDO.buildError ("任务已开始，无法报名");
-            }
+            }*/
             Map<String,Object> map = new HashMap();
             map.put ("task_hr_id",notice.getTaskId ());
             map.put ("worker_id",request.getWorkerId ());
@@ -598,9 +601,10 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper,Notice> implemen
             }
             if(i == 0){
                 if(notice.getType () == 1 || notice.getType () == 3 || notice.getType () == 2){
-                    if(notice.getFromDate ().isBefore (OffsetDateTime.now ())){
+                    //暂时去除报名限制
+                    /*if(notice.getFromDate ().isBefore (OffsetDateTime.now ())){
                         i++;
-                    }
+                    }*/
                 }else if(notice.getType () == 4 || notice.getType () == 0 || notice.getType () == 5){
                     if(notice.getToDate ().isBefore (OffsetDateTime.now ())){
                         i++;
@@ -716,7 +720,7 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper,Notice> implemen
             inform = new Inform();
             //发送同意通知
             if(notice.getType ( ) == 1 ){
-                //发送拒绝通知
+                //发送同意通知
                 content = companyMapper.findCompanyById (notice.getHotelId ()).getName ()+"同意了你的报名申请：报名人数为"+param.getAllotWorkers ()+"人";
                 try {
                     jpushClient.jC.sendPush (JPushManage.buildPushObject_all_alias_message (companyMapper.findCompanyById (enroll.getHrCompanyId ()).getLeaderMobile ( ), content));
