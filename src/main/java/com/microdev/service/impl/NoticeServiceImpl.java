@@ -972,13 +972,14 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper,Notice> implemen
                 str = m.get("birthday").toString().substring(0, 10);
             }
             m.put("birthday", str);
-            List l1 = dictService.findServiceArea(m.get("workerId").toString ());
+            //暂时去除小时工的服务类型及服务地区筛选
+            /*List l1 = dictService.findServiceArea(m.get("workerId").toString ());
             List l2 = dictMapper.queryTypeByUserId(m.get("workerId").toString ());
             m.put("areaCode", l1 == null ? new ArrayList<>() : l1);
             m.put("serviceType", l2 == null ? new ArrayList<>() : l2);
             if(l1.size () == 0 || l2.size () == 0){
                 mp.remove ();
-            }
+            }*/
         }
         return ResultDO.buildSuccess (map);
     }

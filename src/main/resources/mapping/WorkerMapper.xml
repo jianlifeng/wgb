@@ -58,7 +58,7 @@
         <if test="name != null and name !=''">
             and u.nickname like '%${name}%'
         </if>
-        order by u.create_time desc limit 20
+        order by rand() limit 50
 
     </select>
     <select id="queryAllWorker" resultType="java.util.Map" parameterType="com.microdev.param.WorkerQueryDTO">
