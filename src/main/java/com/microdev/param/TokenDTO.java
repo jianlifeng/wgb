@@ -32,5 +32,9 @@ public class TokenDTO {
      * 微信联合登录的openid
      */
     private String openid;
+    /**
+     * 小时工是否有任务 0否 1是
+     */
+    private Integer has_work = 0;
 
 }

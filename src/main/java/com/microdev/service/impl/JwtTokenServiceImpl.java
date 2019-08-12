@@ -13,7 +13,9 @@ import com.microdev.model.User;
 import com.microdev.param.TokenDTO;
 import com.microdev.param.TokenProperties;
 import com.microdev.param.UserDTO;
+import com.microdev.param.api.response.GetCurrentTaskResponse;
 import com.microdev.service.TokenService;
+import com.microdev.service.WorkerService;
 import com.microdev.type.UserType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,12 +55,16 @@ public class JwtTokenServiceImpl implements TokenService {
     private RedisTemplate redisTemplate;
     @Autowired
     private JpushClient jpushClient;
+    @Autowired
+    private WorkerService workerService;
 
     /**
      * 用户登录成功，获取token
      */
     @Override
     public TokenDTO accessToken(UserDTO user, String platform) {
+
+
 
         String userId = user.getId();
         Map<String, Object> map = new HashMap<>();
@@ -81,6 +87,12 @@ public class JwtTokenServiceImpl implements TokenService {
         tokenDTO.setAccess_token(access_token);
         tokenDTO.setRefresh_token(refresh_token);
         tokenDTO.setToken_type("bearer");
+        if(user.getWorkerId() != null){
+            GetCurrentTaskResponse work = workerService.getCurrentTask(user.getWorkerId());
+            if(work != null){
+                tokenDTO.setHas_work(1);
+            }
+        }
         tokenDTO.setExpires_in(tokenProperties.getAccessTokenLifetimeSeconds());
         return tokenDTO;
     }
@@ -130,6 +142,12 @@ public class JwtTokenServiceImpl implements TokenService {
         tokenDTO.setAccess_token(access_token);
         tokenDTO.setRefresh_token(refreshToken);
         tokenDTO.setToken_type("bearer");
+        if(user.getWorkerId() != null){
+            GetCurrentTaskResponse work = workerService.getCurrentTask(user.getWorkerId());
+            if(work != null){
+                tokenDTO.setHas_work(1);
+            }
+        }
         tokenDTO.setExpires_in(tokenProperties.getAccessTokenLifetimeSeconds());
         operations.set(user.getMobile (), uniqueId);
         return tokenDTO;

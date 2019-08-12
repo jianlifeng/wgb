@@ -167,6 +167,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
                 } catch (APIRequestException e) {
                     e.printStackTrace ( );
                 }
+                userDTO.setWorkerId(user.getWorkerId());
             }
         }
 
