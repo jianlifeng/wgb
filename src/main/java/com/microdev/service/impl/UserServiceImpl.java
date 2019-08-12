@@ -167,10 +167,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
                 } catch (APIRequestException e) {
                     e.printStackTrace ( );
                 }
-                userDTO.setWorkerId(user.getWorkerId());
             }
         }
-
+        if(user.getWorkerId()!=null){
+            userDTO.setWorkerId(user.getWorkerId());
+        }
         if (user != null && PasswordHash.validatePassword(login.getPassword(), user.getPassword())) {
             operations.set(user.getMobile (), login.getUniqueId ());
             //录入关联账号
@@ -336,6 +337,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
         userDTO.setUsername(newUser.getUsername());
         userDTO.setUserType(newUser.getUserType());
         userDTO.setRoleList(roleList);
+        if(newUser.getWorkerId()!=null){
+            userDTO.setWorkerId(newUser.getWorkerId());
+        }
         ValueOperations<String, String> operations = redisTemplate.opsForValue();
         operations.set(register.getMobile (), register.getUniqueId ());
         TokenDTO token = tokenService.accessToken(userDTO, register.getPlatform().name());
