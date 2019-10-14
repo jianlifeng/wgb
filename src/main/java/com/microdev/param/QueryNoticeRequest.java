@@ -16,6 +16,8 @@ public class QueryNoticeRequest {
     private String hrCompanyName;
 
     private String hotelId;
+    //用于工厂 门店分类 0工厂 1门店
+    private Integer companyType;
 
     private OffsetDateTime fromDate;
 

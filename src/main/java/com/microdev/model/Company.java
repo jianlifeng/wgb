@@ -96,6 +96,10 @@ public class Company extends BaseEntity {
      * 劳务派遣证
      */
     private String laborDispatchCard;
+    /**
+     * 0 工厂 1门店
+     */
+    private Integer type;
     //评分
     @TableField(exist = false)
     private String grade;
@@ -159,5 +163,16 @@ public class Company extends BaseEntity {
         this.longitude = longitude;
     }
     public String pollCode;
+
+    public Integer getType() {
+
+        return type;
+    }
+
+    public void setType(Integer type) {
+        this.type = type;
+    }
+
+
 
 }

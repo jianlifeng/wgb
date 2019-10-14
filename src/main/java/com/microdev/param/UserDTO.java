@@ -73,6 +73,10 @@ public class UserDTO {
      */
     private UserType userType;
     /**
+     * 0 工厂 1门店
+     */
+    private Integer type = 1;
+    /**
      * 用户二维码
      */
     private String qrCode;
@@ -153,6 +157,11 @@ public class UserDTO {
     private Integer weight;
 
     private Integer education;
+
+    private int privilege;
+
+    private Date  privilegeEndTime;
+
     public String getId() {
         return id;
     }

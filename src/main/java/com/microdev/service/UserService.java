@@ -16,6 +16,9 @@ public interface UserService extends IService<User>{
        //子帐号注册
        ResultDO registerchild(accountParam userDTO) throws Exception;
 
+       //子帐号注册
+       ResultDO createService(CreateServiceParam param) throws Exception;
+
        List<User> query(UserDTO user) throws Exception;
        //用户名+密码登录
        ResultDO login(UserDTO user) throws Exception;

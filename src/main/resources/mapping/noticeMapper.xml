@@ -18,6 +18,9 @@
             <if test="hotelName != null and hotelName !=''">
                 and c.name like concat('%', #{hotelName},'%')
             </if>
+            <if test="companyType != null">
+                and c.type = #{companyType}
+            </if>
             <if test="hrCompanyName != null and hrCompanyName !=''">
                 and c2.name like concat('%', #{hrCompanyName},'%')
             </if>

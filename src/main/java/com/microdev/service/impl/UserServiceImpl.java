@@ -2,6 +2,7 @@ package com.microdev.service.impl;
 
 import cn.jiguang.common.resp.APIConnectionException;
 import cn.jiguang.common.resp.APIRequestException;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.baomidou.mybatisplus.service.impl.ServiceImpl;
 import com.github.pagehelper.PageHelper;
@@ -24,25 +25,32 @@ import com.microdev.type.SocialType;
 import com.microdev.type.UserSex;
 import com.microdev.type.UserType;
 import io.swagger.client.model.RegisterUsers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.thymeleaf.expression.Maps;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.UUID;
 
 @Transactional
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements UserService{
+
+    private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
+
+    @Value("${props.pay.getPayInfoUrl}")
+    private String payUrl;
     @Autowired
     public UserMapper userMapper;
     @Autowired
@@ -81,6 +89,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
     private IMOperateService iMOperateService;
     @Autowired
     private RelationAccountMapper relationAccountMapper;
+    @Autowired
+    private PrivilegeMapper privilegeMapper;
+    @Autowired
+    private UserPrivilegeMapper userPrivilegeMapper;
 
     @Override
     public User create(User user) throws Exception{
@@ -122,6 +134,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
         iMUserService.createNewIMUserSingle(users);
         return ResultDO.buildSuccess ("注册成功");
     }
+
 
     @Override
     public List<User> query(UserDTO user) throws Exception {
@@ -210,6 +223,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
         newUser.setUserType(register.getUserType());
         newUser.setMobile(register.getMobile());
         newUser.setNickname (register.getMobile());
+        newUser.setPrivilege(0);
         newUser.setUserCode(register.getUserType()
                 .toString());
         newUser.setSex (UserSex.UNKNOW);
@@ -260,6 +274,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
             company.setName ("wgb"+UUID.randomUUID ().toString ().toLowerCase ().substring (1,7));
             company.setCompanyType(1);
             company.setBindWorkers (true);
+            company.setType(register.getType());
             company.setBindCompanys (true);
             company.setActiveWorkers (0);
             company.setActiveCompanys (0);
@@ -294,7 +309,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
             company.setLeaderMobile(register.getMobile());
             company.setLeader (newUser.getNickname ());
             company.setCompanyType(2);
-            company.setName ("wgb"+UUID.randomUUID ().toString ().toLowerCase ().substring (1,7));
+            company.setName ("wgb"+ UUID.randomUUID ().toString ().toLowerCase ().substring (1,7));
             company.setBindWorkers (true);
             company.setBindCompanys (true);
             company.setActiveWorkers (0);
@@ -717,8 +732,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
                     company.setLatitude (userDTO.getCompany ().getLatitude ());
                     company.setLongitude (userDTO.getCompany ().getLongitude ());
                 }
+                if(userDTO.getCompany ().getType()!=null){
+                    company.setType(userDTO.getCompany ().getType());
+                }
             }
-
             companyMapper.updateById (company);
         }
     }
@@ -761,6 +778,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
         userDTO.setNickname(user.getString("nickName"));
         userDTO.setAvatar( user1.getAvatar());
         userDTO.setAge (user1.getAge ());
+        userDTO.setPrivilege(user1.getPrivilege());
+        userDTO.setPrivilegeEndTime(user1.getPrivilegeEndTime());
         try{
             switch (user.getString("sex")) {
                 case "男":
@@ -868,6 +887,81 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
         feedBack.setUserType (user.getUserType ());
         feedBackMapper.insert (feedBack);
         return ResultDO.buildSuccess ("反馈成功");
+    }
+
+    @Override
+    public ResultDO createService(CreateServiceParam param) throws Exception {
+        User user = userMapper.queryByUserId(param.getUserId());
+        if(user == null){
+            return ResultDO.buildError("用户不存在");
+        }
+        if(param.getPayType() != 5 && param.getPayType() != 6){
+            return ResultDO.buildError("支付类型错误");
+        }
+        Privilege privilege = privilegeMapper.selectById(param.getPrivilegeId());
+        if(privilege == null){
+            return ResultDO.buildError("开通的会员套餐不存在");
+        }
+        Date now = new Date();
+        Calendar c = Calendar.getInstance();
+        c.setTime(now);
+        c.add(Calendar.DATE, privilege.getDays());
+        UserPrivilege userPrivilege = new UserPrivilege();
+        userPrivilege.setBeginTime(now);
+        userPrivilege.setEndTime(c.getTime());
+        userPrivilege.setPayStatus(0);
+        userPrivilege.setPayType(param.getPayType());
+        userPrivilege.setPrice(param.getPrice());
+        userPrivilege.setPrivilegeContent(privilege.getContent());
+        userPrivilege.setPrivilegeType(privilege.getType());
+        userPrivilege.setUserId(param.getUserId());
+        userPrivilege.setUserType(user.getUserType());
+        userPrivilegeMapper.insert(userPrivilege);
+        // 发起支付
+        JSONObject jo = this.sendPay(userPrivilege);
+        if (jo.getInteger("status") == 1) {
+            if (param.getPayType() == 5) {
+                JSONObject data = JSONObject.parseObject(jo.getString("data"));
+                data.put("orderId", userPrivilege.getPid());
+                data.put("payAmount", userPrivilege.getPrice().toString());
+                return ResultDO.buildSuccess(data);
+            } else if (param.getPayType() == 6) {
+                JSONObject data = new JSONObject();
+                data.put("orderId", userPrivilege.getPid());
+                data.put("payAmount", userPrivilege.getPrice().toString());
+                data.put("alibaba", jo.get("data"));
+                return ResultDO.buildSuccess(data);
+            } else {
+                throw new RuntimeException("支付方式不正确！");
+            }
+        } else {
+            logger.error("支付请求错误! orderId : {}", userPrivilege.getPid());
+            return ResultDO.buildError(jo.getString("msg"));
+        }
+    }
+
+    public JSONObject sendPay(UserPrivilege param)
+            throws RuntimeException {
+        Map<String, String> params = new HashMap<>();
+        params.put("body", "微工宝会员订单");
+        params.put("subject", "微工宝会员订单");
+        int   totalFee = (int) (param.getPrice().doubleValue() * 100);
+        params.put("totalFee", String.valueOf(totalFee));
+        params.put("useTotalFee", "true"); // 是否使用固定金额
+        params.put("serviceCode", Const.HY);
+        params.put("orderId", param.getPid());
+        params.put("userId", param.getUserId());
+        //params.put("orderNo", null); // 不传收款服务生成
+        params.put("payType", String.valueOf(param.getPayType()));
+        params.put("sign", PaySignUtil.createSign(JSONObject.toJSONString(params)));
+        String rs = HttpClientUtil.doPost(payUrl, params);
+        logger.debug("支付请求返回数据:" + rs);
+        if (org.apache.commons.lang.StringUtils.isBlank(rs)) {
+            logger.error("send pay error, orderNo : {}", param.getPid());
+            throw new RuntimeException("支付服务请求失败，请重试！");
+        }
+        JSONObject jo = JSONObject.parseObject(rs);
+        return jo;
     }
 
 }

@@ -215,7 +215,6 @@ public class UserController {
      */
     @PostMapping ("/base-info")
     public ResultDO modifyBaseInfo(@RequestBody UserDTO userDTO) {
-
         userService.modifyBaseInfo(userDTO);
         return ResultDO.buildSuccess("修改成功");
     }

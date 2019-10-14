@@ -4,7 +4,7 @@
     <sql id="Company_Column_List">
         id as pid, create_time, deleted, modify_time,address,
         business_license, company_type, confirmed_time, latitude, leader, leader_mobile, address_code ,area,
-        logo, longitude, name, status, labor_dispatch_card, qr_code,active_workers,active_companys,bind_companys,bind_workers,poll_code
+        logo, longitude, name, status, labor_dispatch_card, qr_code,active_workers,active_companys,bind_companys,bind_workers,poll_code,type
     </sql>
     <sql id="Company_Query_Param">
         <if test="name != null and name != ''">
@@ -21,6 +21,9 @@
         </if>
         <if test="pollCode != null and pollCode != ''">
             and poll_code = #{pollCode}
+        </if>
+        <if test="observertype ==2 and type != null">
+            and type = #{type}
         </if>
         <if test="(observertype == 2 or observertype == 1) and name != null and (name == null or name == '')">
             and active_companys = 0
@@ -55,7 +58,7 @@
                 </if>-->
                 <if test="observertype == 1">
                     <!-- 增加用人单位广场查看人力公司 但是去除服务地区和类型的筛选（用于会员功能） -->
-                    and /*id IN(select a.id from
+                    and id  <!--IN(select a.id from
                     (select DISTINCT id from task_type_relation where task_type_id In
                     (select task_type_id from task_type_relation where id = #{observerId}) and id_type = 2
                     )a
@@ -63,12 +66,13 @@
                     (select DISTINCT id from area_relation where area_id In
                     (select area_id from area_relation where id = #{observerId}) and id_type = 2
                     )b on a.id = b.id
-                    where a.id*/ not IN
+                    where a.id--> not IN
                     (select hr_id from hotel_hr_company where hotel_id = #{observerId} and status IN (0,3,5))
-                    )
+                    <!--)-->
                 </if>
-                <!--<if test="observertype == 2">
-                    and id IN(select a.id from
+                <if test="observertype == 2">
+                    <!-- 增加人力查看用人单位分类功能 （工厂，门店） 但是去除服务地区和类型的筛选（用于会员功能） -->
+                    and id <!--IN(select a.id from
                     (select DISTINCT id from task_type_relation where task_type_id In
                     (select task_type_id from task_type_relation where id = #{observerId}) and id_type = 1
                     )a
@@ -76,10 +80,10 @@
                     (select DISTINCT id from area_relation where area_id In
                     (select area_id from area_relation where id = #{observerId}) and id_type = 1
                     )b on a.id = b.id
-                    where a.id not IN
+                    where a.id--> not IN
                     (select hotel_id from hotel_hr_company where hr_id = #{observerId} and status IN (0,3,5))
-                    )
-                </if>-->
+                    <!--)-->
+                </if>
             </if>
         </where>
         order by create_time desc

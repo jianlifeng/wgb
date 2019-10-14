@@ -23,7 +23,7 @@ public class CompanyQueryDTO {
     /**
      * 状态
      */
-    private Integer status;
+    private Integer status = 1;
     /**
      * 负责人
      */
@@ -39,14 +39,16 @@ public class CompanyQueryDTO {
     /**
      * 查看列表者ID
      */
-    private String observerId;
+    private String observerId = "0a58ac0e33314984aba534021655b7af";
     /**
      * 查看列表者类型
      * 0:小时工(用户ID) 2:人力公司 1:用人单位
      */
-    private Integer observertype;
+    private Integer observertype = 1;
 
     private String serviceType;
 
     private String pollCode;
+    //0 工厂 1门店
+    private Integer type = 1;
 }

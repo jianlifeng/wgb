@@ -7,6 +7,7 @@ import com.microdev.type.UserType;
 import lombok.Data;
 
 import java.time.OffsetDateTime;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -64,7 +65,13 @@ public class User extends BaseEntity{
 	private Integer age;
 
 
-    private String superior;	private int msNum;
+    private String superior;
+
+    private int msNum;
+
+    private int privilege;
+
+    private Date privilegeEndTime;
     /**
      * 用户所属角色集合
      */

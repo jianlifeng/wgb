@@ -17,7 +17,7 @@ import java.time.OffsetDateTime;
  * @author liutf
  */
 @Data
-public abstract class BaseEntity implements Serializable {
+public abstract class  BaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
