@@ -96,6 +96,7 @@ public interface Constant {
         add("/user/privilege");*/
         add("/hotels/*");
         add("/hrcompanies/search");
+        add("/query/notice");
     }};
 
 

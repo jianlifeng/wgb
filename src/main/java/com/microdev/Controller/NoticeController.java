@@ -24,7 +24,9 @@ public class NoticeController {
      * 查询
      */
     @PostMapping("/query/notice")
-    public ResultDO queryNotice(@RequestBody PagingDO<QueryNoticeRequest> paging) {
+    public ResultDO queryNotice(@RequestBody(required = true) PagingDO<QueryNoticeRequest> paging) {
+        /*paging = new PagingDO<QueryNoticeRequest>();
+        paging.setSelector(new QueryNoticeRequest());*/
         return noticeService.queryNotice(paging.getPaginator(),paging.getSelector());
     }
     /**

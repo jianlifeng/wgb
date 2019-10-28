@@ -907,6 +907,12 @@ public class WorkerServiceImpl extends ServiceImpl<WorkerMapper, Worker> impleme
         List<Map<String, Object>> list = null;
         if (workerQueryDTO.getHrId() == null) {
             list = workerMapper.queryAllWorker(workerQueryDTO);
+            list.forEach(ls ->{
+                List l1 = dictService.findServiceArea(ls.get("pid").toString());
+                List l2 = dictMapper.queryTypeByUserId(ls.get("pid").toString());
+                ls.put("areaCode", l1 == null ? new ArrayList<>() : l1);
+                ls.put("serviceType", l2 == null ? new ArrayList<>() : l2);
+            });
             PageInfo<Map<String, Object>> pageInfo = new PageInfo<>(list);
             HashMap<String, Object> result = new HashMap<>();
             //设置获取到的总记录数total：
@@ -919,6 +925,12 @@ public class WorkerServiceImpl extends ServiceImpl<WorkerMapper, Worker> impleme
             list = workerMapper.queryWorkers(workerQueryDTO);
             PageInfo<Map<String, Object>> pageInfo = new PageInfo<>(list);
             HashMap<String, Object> result = new HashMap<>();
+            list.forEach(ls ->{
+                List l1 = dictService.findServiceArea(ls.get("wid").toString());
+                List l2 = dictMapper.queryTypeByUserId(ls.get("wid").toString());
+                ls.put("areaCode", l1 == null ? new ArrayList<>() : l1);
+                ls.put("serviceType", l2 == null ? new ArrayList<>() : l2);
+            });
             result.put("total", pageInfo.getTotal());
             //设置数据集合rows：
             result.put("result", pageInfo.getList());
