@@ -12,7 +12,7 @@ public class Privilege extends BaseEntity{
 
     private Double price;
 
-    private UserType userType;
+    private String userType;
 
     private Integer type;
     //天数

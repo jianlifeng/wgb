@@ -44,8 +44,8 @@ public class ServiceController {
      *  会员价格表
      */
     @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping("/privilege/List")
-    public ResultDO privilegeList(UserType userType) throws Exception {
+    @PostMapping("/privilege/List/{userType}")
+    public ResultDO privilegeList(@PathVariable String userType) throws Exception {
         List<Privilege> result = privilegeMapper.selectList(new EntityWrapper<Privilege>().eq("user_type",userType));
         return ResultDO.buildSuccess(result);
     }
@@ -54,8 +54,8 @@ public class ServiceController {
      *  会员价格表
      */
     @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping("/user/privilege")
-    public ResultDO useprivilegeList(String userId) throws Exception {
+    @PostMapping("/user/privilege{userId}")
+    public ResultDO useprivilegeList(@PathVariable String userId) throws Exception {
         List<UserPrivilege> result = userPrivilegeMapper.selectList(new EntityWrapper<UserPrivilege>().eq("user_id",userId));
         return ResultDO.buildSuccess(result);
     }

@@ -91,9 +91,9 @@ public interface Constant {
         add("/hotel/pay/worker/account");
         add("/relation/account/*");
         add("/delete/relation/*");
-        /*add("/user/createService*");
-        add("/privilege/List");
-        add("/user/privilege");*/
+        add("/user/createService*");
+        add("/privilege/List/*");
+        add("/user/privilege/*");
         add("/hotels/*");
         add("/hrcompanies/search");
         add("/query/notice");
