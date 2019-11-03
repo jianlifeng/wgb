@@ -534,4 +534,20 @@ public class UserController {
         return ResultDO.buildSuccess ("删除成功");
     }
 
+    /**
+     * 获取切换账号数据
+     */
+    @GetMapping("/get/userInfo/{pid}")
+    public ResultDO getuserInfo(@PathVariable String pid) throws Exception{
+        User user = userMapper.selectById(pid);
+        Map map = new HashMap();
+        if(user.getPrivilegeEndTime()!=null && user.getPrivilegeEndTime().after(new Date())){
+            map.put("privilege",1);
+            map.put("privilegeEndTime",user.getPrivilegeEndTime());
+        }else{
+            map.put("privilege",0);
+        }
+        return ResultDO.buildSuccess (map);
+    }
+
 }

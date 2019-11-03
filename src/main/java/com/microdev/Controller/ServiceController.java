@@ -54,9 +54,9 @@ public class ServiceController {
      *  会员价格表
      */
     @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping("/user/privilege{userId}")
+    @PostMapping("/user/privilege/{userId}")
     public ResultDO useprivilegeList(@PathVariable String userId) throws Exception {
-        List<UserPrivilege> result = userPrivilegeMapper.selectList(new EntityWrapper<UserPrivilege>().eq("user_id",userId));
+        List<UserPrivilege> result = userPrivilegeMapper.selectList(new EntityWrapper<UserPrivilege>().eq("user_id",userId).orderBy("create_time",false));
         return ResultDO.buildSuccess(result);
     }
 

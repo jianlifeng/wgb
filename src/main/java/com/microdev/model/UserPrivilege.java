@@ -27,4 +27,6 @@ public class UserPrivilege extends BaseEntity{
     private String privilegeContent;
     //会员类型
     private Integer privilegeType;
+
+    private String orderNo;
 }

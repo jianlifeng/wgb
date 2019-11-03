@@ -769,7 +769,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
         UserType userType = user.getObj("userType", UserType.class);
 
         String mobile = user.getString("mobile");
-        User user1 = userMapper.queryByUserId(user.getId());
+        User user1 = userMapper.selectById(user.getId());
         //昵称
         String nickName = user1.getNickname();
         UserDTO userDTO = new UserDTO();
@@ -778,7 +778,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
         userDTO.setNickname(user.getString("nickName"));
         userDTO.setAvatar( user1.getAvatar());
         userDTO.setAge (user1.getAge ());
-        userDTO.setPrivilege(user1.getPrivilege());
+        if(user1.getPrivilegeEndTime()!=null && user1.getPrivilegeEndTime().after(new Date())){
+            userDTO.setPrivilege(1);
+        }else{
+            userDTO.setPrivilege(0);
+        }
         userDTO.setPrivilegeEndTime(user1.getPrivilegeEndTime());
         try{
             switch (user.getString("sex")) {
@@ -902,12 +906,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
         if(privilege == null){
             return ResultDO.buildError("开通的会员套餐不存在");
         }
-        Date now = new Date();
+        List<UserPrivilege> list = userPrivilegeMapper.selectList(new EntityWrapper<UserPrivilege>().eq("user_id",param.getUserId()).orderBy("create_time",false));
+        Date begin = new Date();
+        if(list.size()>0 && list.get(0).getEndTime().compareTo(new Date())==1){
+            begin = list.get(0).getEndTime();
+        }
         Calendar c = Calendar.getInstance();
-        c.setTime(now);
+        c.setTime(begin);
         c.add(Calendar.DATE, privilege.getDays());
         UserPrivilege userPrivilege = new UserPrivilege();
-        userPrivilege.setBeginTime(now);
+        userPrivilege.setBeginTime(begin);
         userPrivilege.setEndTime(c.getTime());
         userPrivilege.setPayStatus(0);
         userPrivilege.setPayType(param.getPayType());
@@ -915,6 +923,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
         userPrivilege.setPrivilegeContent(privilege.getContent());
         userPrivilege.setPrivilegeType(privilege.getType());
         userPrivilege.setUserId(param.getUserId());
+        userPrivilege.setOrderNo(SysUtil.createOrderNo());
         userPrivilege.setUserType(user.getUserType());
         userPrivilegeMapper.insert(userPrivilege);
         // 发起支付
@@ -951,7 +960,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
         params.put("serviceCode", Const.HY);
         params.put("orderId", param.getPid());
         params.put("userId", param.getUserId());
-        //params.put("orderNo", null); // 不传收款服务生成
+        params.put("orderNo", param.getOrderNo()); // 不传收款服务生成
         params.put("payType", String.valueOf(param.getPayType()));
         params.put("sign", PaySignUtil.createSign(JSONObject.toJSONString(params)));
         String rs = HttpClientUtil.doPost(payUrl, params);

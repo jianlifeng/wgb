@@ -97,6 +97,8 @@ public interface Constant {
         add("/hotels/*");
         add("/hrcompanies/search");
         add("/query/notice");
+        add("/wgb/pay/paySuccess");
+        add("/get/userInfo/*");
     }};
 
 
