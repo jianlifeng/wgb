@@ -29,4 +29,6 @@ public class UserPrivilege extends BaseEntity{
     private Integer privilegeType;
 
     private String orderNo;
+
+    private String level;
 }

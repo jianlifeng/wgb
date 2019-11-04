@@ -925,6 +925,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
         userPrivilege.setUserId(param.getUserId());
         userPrivilege.setOrderNo(SysUtil.createOrderNo());
         userPrivilege.setUserType(user.getUserType());
+        userPrivilege.setLevel(privilege.getDays() + "天VIP");
         userPrivilegeMapper.insert(userPrivilege);
         // 发起支付
         JSONObject jo = this.sendPay(userPrivilege);
